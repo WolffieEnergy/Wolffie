@@ -9,6 +9,7 @@ It collects, stores, and visualizes real-time and historical energy data from mu
 The system is built for extensibility, allowing new energy sources to be integrated as modular plug-ins without changing the core application. Connect your EV-charger, your Windturbine, your Boiler...
 
 ![](homePage_dashboard.png)
+![](homePage_dashboard_simple.png)
 ---
 
 ## Architecture
