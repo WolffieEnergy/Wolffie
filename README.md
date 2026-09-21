@@ -185,17 +185,14 @@ The **Collector Manager** discovers and loads modules at startup, orchestrating 
 - HomeWizard Energy module (energy-socket devices manually added, based on api v1)
 - SolarEdge integration
 - Universal UI component system (dynamic rendering from backend schemas)
-
-### In Progress
-
-- HomeWizard Energy module (device discovery, P1 meter, smart sockets)
 - A strategy module that determines when or if to charge from grid (low-prices) based on morning usage. Combined with the expected Solar production for next day.(hence solar-forecast)
-
+- VLAN-isolated ModBus security hardening
+- Dashboard enhancement
+- Theming
 ### Planned
 
 - Data retention policy automation
 - Multi-building / multi-location support
-- VLAN-isolated ModBus security hardening
 - Long-term database optimization
 
 ---
