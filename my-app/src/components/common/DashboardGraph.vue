@@ -116,13 +116,14 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
   if (!chartCanvas.value) return;
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-  const isDark   = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const tickCol  = isDark ? 'rgba(255,255,255,0.4)' : '#9ca3af';
-  const gridLine = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  // Lees dynamisch de actieve thema-kleuren uit
+  const style = getComputedStyle(document.documentElement);
+  const colorSolar   = style.getPropertyValue('--chart-solar').trim()   || '#636B2F';
+  const colorGrid    = style.getPropertyValue('--chart-grid').trim()    || '#4A6B82';
+  const colorBattery = style.getPropertyValue('--chart-battery').trim() || '#C87D55';
+  const colorYield   = style.getPropertyValue('--chart-yield').trim()   || '#D4A359';
+  const colorAxis    = style.getPropertyValue('--chart-axis').trim()    || '#857A6D';
 
-  // Compute symmetric y range so zero is always centred.
-  // Max positive = largest stacked consumption bar (sum of all three sources per hour).
-  // Max negative = largest export bar.
   let maxPos = 0;
   let maxNeg = 0;
   for (let h = 0; h < 24; h++) {
@@ -131,7 +132,7 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
     if (pos > maxPos) maxPos = pos;
     if (neg > maxNeg) maxNeg = neg;
   }
-  const yExtent = Math.max(maxPos, maxNeg, 0.2) * 1.15; // 15% padding, min 0.2
+  const yExtent = Math.max(maxPos, maxNeg, 0.2) * 1.15;
 
   chartInstance = new Chart(chartCanvas.value, {
     data: {
@@ -140,7 +141,7 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
         {
           type: 'bar', label: 'Solar → home',
           data: solarToLoad,
-          backgroundColor: 'var(--secondary-500)',
+          backgroundColor: colorSolar,
           stack: 'consumption',
           borderRadius: 6, borderSkipped: false,
           barPercentage: 0.6, categoryPercentage: 0.85,
@@ -148,7 +149,7 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
         {
           type: 'bar', label: 'Battery → home',
           data: battToLoad,
-          backgroundColor: '#059669',
+          backgroundColor: colorBattery,
           stack: 'consumption',
           borderRadius: 6, borderSkipped: false,
           barPercentage: 0.6, categoryPercentage: 0.85,
@@ -156,7 +157,7 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
         {
           type: 'bar', label: 'Grid → home',
           data: gridToLoad,
-          backgroundColor: '#F43F5E',
+          backgroundColor: colorGrid,
           stack: 'consumption',
           borderRadius: 6, borderSkipped: false,
           barPercentage: 0.6, categoryPercentage: 0.85,
@@ -164,7 +165,7 @@ function buildChart(solarToLoad, battToLoad, gridToLoad, solarToGrid) {
         {
           type: 'bar', label: 'Solar → battery',
           data: solarToGrid,
-          backgroundColor: 'rgba(93,202,165,0.75)',
+          backgroundColor: colorYield,
           stack: 'export',
           borderRadius: 6, borderSkipped: false,
           barPercentage: 0.6, categoryPercentage: 0.85,

@@ -438,7 +438,7 @@ onUnmounted(() => {
 .dispatch-panel         { display: flex; flex-direction: column; gap: 1rem; }
 
 /* ── Status bar ──────────────────────────────────────────────────────────── */
-.status-bar             { display: flex; align-items: center; gap: 0.75rem;padding: 0.625rem 0.875rem; background: #f9fafb; border: 1px solid #e5e7eb;}
+.status-bar             { display: flex; align-items: center; gap: 0.75rem;padding: 0.625rem 0.875rem; background: var(--color-background); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
 .status-bar__dot        { width: 14px; height: 14px;border-radius: 50%;background: var(--color-primary);flex-shrink: 0;animation: pulse 3s infinite;}
 .status-bar--warn       { border-color: #f59e0b; background: #fffbeb; }
 .status-bar--warn .status-bar__dot { background: #f59e0b; }
@@ -464,14 +464,15 @@ onUnmounted(() => {
 }
 
 /* ── Individual card ──────────────────────────────────────────────────────── */
-.dcard                  { display: flex;flex-direction: column;gap: 1rem;padding: 1.25rem;border-radius: var(--radius-lg);}
+.dcard                  { display: flex;flex-direction: column;gap: 1rem;padding: 1.25rem;border-radius: var(--radius-lg);background-color: var(--color-background); }
 
 .dcard__header          { display: flex; flex-direction: column; gap: 0.25rem; }
-.dcard__title           { font-size: 0.875rem; font-weight: 600; color: #111827; }
+.dcard__title           { font-size: 0.875rem; font-weight: 600; color: var(--color-primary); }
 .dcard__sub             { font-size: 0.775rem; color: #6b7280; }
 
 .fields                 { display: flex; flex-direction: column; gap: 0.875rem; }
+.field__value           { font-size: 0.875rem; font-weight: 600; color: var(--color-primary)!important; }
 
 /* ── Summary line ─────────────────────────────────────────────────────────── */
-.dcard__summary         { font-size: 0.775rem;color: #6b7280;background: #fff;padding: 0.5rem 0.75rem;border-radius: 4px;}
+.dcard__summary         { font-size: 0.775rem;font-weight: 500;color: var(--color-secondary-700);background: var(--color-background);padding: 0.5rem 0.75rem;border-radius: 4px;}
 </style>

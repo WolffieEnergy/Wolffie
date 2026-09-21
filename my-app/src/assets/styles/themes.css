@@ -56,12 +56,22 @@ html[data-theme='default'] {
   --color-background:     #eef3f8;
   --card-bg-color:        #ffffff;
 
-  --radius-sm:  4px;
-  --radius-md:  8px;
-  --radius-lg:  12px;
-  --radius-xl:  16px;
-  --radius-2xl: 24px;
-  --border-radius: 0.5rem;
+  /* Energy Chart Palette */
+  --chart-solar:   #dfc908; /* Warm amber */
+  --chart-grid:    #bd2626;; /* High-contrast orange */
+  --chart-battery: #137e3a; /* Crisp emerald green */
+  --chart-yield:   #0284C7; /* Deep azure blue, home usage */
+  --chart-axis:    #64748B;   /* Muted steel blue, chart axes */
+
+  --radius-sm:  0px;
+  --radius-md:  0px;
+  --radius-lg:  .75rem;
+  --radius-xl:  .75rem;
+  --radius-2xl: 0px;
+  --border-radius: .75rem;
+  --border-color:  transparent ;
+  --max-width:  1180px;
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -70,23 +80,30 @@ html[data-theme='default'] {
 html[data-theme='olive'] {
   color-scheme: light;
 
-  --color-primary:        #3d3028;
+  --color-primary:        #3D4127;
   --color-on-accent:      #ffffff;
   --color-toggle-knob:    #ffffff;
 
-  --color-secondary-50:   #faf9f7;
-  --color-secondary-100:  #f4f2ef;
-  --color-secondary-200:  #e8e4de;
-  --color-secondary-300:  #d5cec4;
-  --color-secondary-400:  #a1968a;
-  --color-secondary-500:  #857a6d;
-  --color-secondary-600:  #6b6156;
-  --color-secondary-700:  #544c43;
-  --color-secondary-800:  #3d3830;
-  --color-secondary-900:  #2a2620;
+/* Light Mode Secondary Olive Palette (Base #636B2F) */
+  --color-secondary-50:  #f6f7f0; /* Zeer lichte olijf-tint / achtergronden */
+  --color-secondary-100: #eaece0; /* Subtiele achtergronden / kaarten */
+  --color-secondary-200: #d6d9c2; /* Randen / diviselijnen */
+  --color-secondary-300: #b8bd97; /* Inactieve / uitgeschakelde UI-elementen */
+  --color-secondary-400: #889251; /* Lichte accenten / minder prominente buttons */
+  --color-secondary-500: #636B2F; /* Basis olijfkleur */
+  --color-secondary-600: #505725; /* Hover states / interactieve elementen */
+  --color-secondary-700: #3e441b; /* WCAG AA contrast voor tekst op lichte achtergronden */
+  --color-secondary-800: #2c3012; /* Donkere tekst / iconen */
+  --color-secondary-900: #1a1d0a; /* Diepste tekst / hoogste contrast */
 
-  --color-background:     #f5f3f0;
+  --color-background:     #f1f0e8;
   --card-bg-color:        #ffffff;
+
+  --chart-solar:   #c7bf4d; /* Ochre gold */ /* Theme base olive */
+  --chart-grid:    #e9543a; /* warm sienna / burnt orange */
+  --chart-battery: #636B2F; /* Terracotta / Clay */
+  --chart-yield:   #4A6B82; /* Muted steel blue */
+  --chart-axis:    #857A6D; /* Readable neutral grey-brown */
 
   --radius-sm:  4px;
   --radius-md:  8px;
@@ -94,6 +111,8 @@ html[data-theme='olive'] {
   --radius-xl:  16px;
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
+  --border-color:  var(--color-secondary-50) ;
+  --max-width:  1200px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -124,12 +143,20 @@ html[data-theme='ocean'] {
   --color-background:     #e9f0f7;
   --card-bg-color:        #ffffff;
 
+   /* Energy Chart Palette */
+  --chart-solar:   #0D9488; /* Deep teal */
+  --chart-grid:    #2563EB; /* Deep ocean blue */
+  --chart-battery: #E11D48; /* Deep coral red */
+  --chart-yield:   #D97706; /* Warm amber */
+  --chart-axis:    #7BA3C2; /* Muted sea-grey */
+
   --radius-sm:  4px;
   --radius-md:  8px;
   --radius-lg:  12px;
   --radius-xl:  16px;
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
+  --border-color:  transparent ;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -141,26 +168,27 @@ html[data-theme='ocean'] {
    carries it for energy charts.
    ══════════════════════════════════════════════════════════════════ */
 html[data-theme='solar'] {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --color-primary:        #0f172a;
-  --color-accent:         #f59e0b;
+  --color-primary:        #EAA221;
+  --color-accent:         #B38000;
   --color-on-accent:      #ffffff;
   --color-toggle-knob:    #ffffff;
 
-  --color-secondary-50:   #f8fafc;
-  --color-secondary-100:  #f1f5f9;
-  --color-secondary-200:  #e2e8f0;
-  --color-secondary-300:  #cbd5e1;
-  --color-secondary-400:  #8d9cb0;
-  --color-secondary-500:  #64748b;
-  --color-secondary-600:  #475569;
-  --color-secondary-700:  #334155;
-  --color-secondary-800:  #1e293b;
-  --color-secondary-900:  #0f172a;
+--color-secondary-50: #1c1607;
+  --color-secondary-100: #2b220b;
+  --color-secondary-200: #453712;
+  --color-secondary-300: #6b551c;
+  --color-secondary-400: #a07f2b;
+  --color-secondary-500: #eabe53; /* Base */
+  --color-secondary-600: #eed078;
+  --color-secondary-700: #f3de9b;
+  --color-secondary-800: #f7eabd;
+  --color-secondary-900: #faf4de;
+  --color-secondary-950: #fdfbf5;
 
-  --color-background:     #eef2f7;
-  --card-bg-color:        #ffffff;
+  --color-background:     #0f172a;
+  --card-bg-color:        #2B2E42;
 
   --radius-sm:  8px;
   --radius-md:  16px;
@@ -168,6 +196,7 @@ html[data-theme='solar'] {
   --radius-xl:  32px;
   --radius-2xl: 48px;
   --border-radius: 1rem;
+  --border-color:  var(--color-secondary-100) ;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -195,12 +224,20 @@ html[data-theme='carbon'] {
   --color-background:     #161816;
   --card-bg-color:        #22271f;
 
+   /* Energy Chart Palette */
+  --chart-solar:    #FACC15; /* Soft sunshine yellow */
+  --chart-grid:     #F97316; /* Warm burnt orange */
+  --chart-battery:  #86EFAC; /* Soft mint / spring green */
+  --chart-yield:    #60A5FA; /* Cool forest blue */
+  --chart-axis:     #7D8C7F; /* Soft moss grey */
+
   --radius-sm:  4px;
   --radius-md:  8px;
   --radius-lg:  12px;
   --radius-xl:  16px;
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
+  --border-color:  var(--color-secondary-300) ;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -209,31 +246,40 @@ html[data-theme='carbon'] {
 html[data-theme='midnight'] {
   color-scheme: dark;
 
-  --color-primary:        #f4eff1;
+  --color-primary:        #94666d;
   --color-accent:         #fb7185;
   --color-on-accent:      #1a0f12;
   --color-toggle-knob:    #f4eff1;
 
-  --color-secondary-50:   #141419;
-  --color-secondary-100:  #1b1b21;
-  --color-secondary-200:  #26262e;
-  --color-secondary-300:  #35353f;
-  --color-secondary-400:  #83838f;
-  --color-secondary-500:  #9a9aa6;
-  --color-secondary-600:  #b1b1bc;
-  --color-secondary-700:  #c9c9d2;
-  --color-secondary-800:  #dedee5;
-  --color-secondary-900:  #f2f2f6;
+/* Basis / Anchor: #f89ec4 (rond 600/700) */
+--color-secondary-50:  #201217; /* Diepste donkerroze/zwart */
+--color-secondary-100: #2b1820;
+--color-secondary-200: #3d202d;
+--color-secondary-300: #572d40;
+--color-secondary-400: #8c4667;
+--color-secondary-500: #c46d95; /* Midden/Muted roze */
+--color-secondary-600: #e285b0;
+--color-secondary-700: #f89ec4; /* <-- Jouw basiskleur */
+--color-secondary-800: #fccfe2; /* Pastel accent */
+--color-secondary-900: #fdecf3; /* Zachtste achtergrond tint */
 
   --color-background:     #0f0f12;
-  --card-bg-color:        #17171c;
+  --card-bg-color:        #09090c;
+
+   /* Energy Chart Palette */ 
+  --chart-solar:    #adab35; /* Soft sunshine yellow */
+  --chart-grid:     #c22317; /* Warm burnt orange */
+  --chart-battery:  #1a8616; /* Soft mint / spring green */
+  --chart-yield:    #5186c7; /* Cool forest blue */
+  --chart-axis:     #7D8C7F; /* Soft moss grey */
 
   --radius-sm:  4px;
   --radius-md:  8px;
   --radius-lg:  12px;
   --radius-xl:  16px;
   --radius-2xl: 24px;
-  --border-radius: 0.5rem;
+  --border-radius: 1rem;
+  --border-color:  var(--color-secondary-100) ;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -261,12 +307,19 @@ html[data-theme='wolffie'] {
   --color-background:     #1E2030;
   --card-bg-color:        #2B2E42;
 
+  --chart-solar:   #FBBF24; /* Warm amber */
+  --chart-grid:    #aa4253; /* Theme primary lilac */
+  --chart-battery: #72eb78; /* Vibrant rose/coral */
+  --chart-yield:   #38BDF8; /* Bright cyan/sky blue */
+  --chart-axis:    #be82aa; /* Lilac-tinted muted text */
+
   --radius-sm:  6px;
   --radius-md:  12px;
   --radius-lg:  18px;
   --radius-xl:  24px;
   --radius-2xl: 36px;
   --border-radius: 0.75rem;
+  --border-color:  var(--color-secondary-300) ;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -285,8 +338,8 @@ html[data-theme] {
   --color-text-secondary:    var(--color-secondary-600);
   --color-text-tertiary:     var(--color-secondary-400);
 
-  --color-border:            var(--color-secondary-300);
-  --color-border-dark:       var(--color-secondary-400);
+  --color-border:            var(--border-color);
+  --color-border-dark:       var(--border-color);
 
   --color-bg-primary:        var(--color-background);
   --color-bg-secondary:      var(--color-secondary-100);

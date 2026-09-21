@@ -43,7 +43,7 @@ const W = 480;
 const H = 467;
 
 defineProps({
-  title: { type: String, default: 'Wolffie' },
+  title: { type: String, default: 'wolffie' },
 });
 </script>
 

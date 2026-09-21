@@ -1,9 +1,11 @@
 /* src/assets/styles/main.css
 @import "./rubik.css";*/
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600;700&display=swap');
 @import "./ph-light.css";
 @import "./ph-fill.css";
 @import "tailwindcss";
 @import "./themes.css";
+
 
 /* ── Tailwind v4 @theme ───────────────────────────────────────────────────────
  * @theme resolves at BUILD time and does two things:
@@ -25,7 +27,7 @@
  * .bg-card utility.
  * ─────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --font-family-sans: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-sans: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --color-primary:   #0a0a0a;
   --color-accent:    #5492be;
@@ -43,6 +45,7 @@
   --color-secondary-900: #111827;
 
   --color-background: #eef3f8;
+  --max-width:  1300px;
 }
 
 /* ── Root vars NOT managed per-theme ──────────────────────────────────────────
@@ -75,7 +78,7 @@
   --gap-3xl: 4rem;
 
   /* Typography */
-  --font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs:   0.75rem;
   --font-size-sm:   0.875rem;
   --font-size-base: 1rem;
@@ -99,15 +102,13 @@
   --shadow-lg: none;
   --tw-shadow-color: transparent;
 
-  /* PrimeVue */
-  --p-card-shadow: none;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 html                    { font-size: 16px;-webkit-font-smoothing: antialiased;-moz-osx-font-smoothing: grayscale;}
-body                    { font-family: var(--font-family);font-weight: var(--font-weight-normal);background-color: var(--color-background);color: var(--color-text-primary);line-height: 1.5;min-height: 100vh;overflow-x: hidden;overflow-y: auto;}
-#app                    { max-width: 100%;margin: 0; padding: 0;min-height: 100vh;background: var(--color-background);}
-.--color-background     { background-color: var(--color-background); }
+body                    { font-family: var(--font-family);font-weight: var(--font-weight-normal);background-color: var(--color-background);color: var(--color-text-primary);line-height: 1.5;min-height: 100vh;overflow: hidden;}
+#app                    { max-width: var(--max-width);margin: auto; padding: 0;min-height: 100vh;}
+.app-section            { height: 100dvh;   /* not 100vh — see below */overflow: hidden;}
 
 /* ── Card styles ──────────────────────────────────────────────────────────── */
 .energy-card, .p-card   { background: var(--color-bg-secondary);border: 1px solid var(--color-border);border-radius: var(--radius-xl);box-shadow: none;transition: all 0.2s ease;overflow: hidden;}
@@ -117,7 +118,7 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
                         { padding: var(--gap-xl); color: var(--color-text-primary); }
 .p-card-title           { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); font-size: var(--font-size-lg); margin-bottom: var(--gap-md); }
 .p-card-subtitle        { color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-normal); }
-.bg-card                { background-color: var(--card-bg-color); border: 1px solid var(--color-secondary-200); border-radius: var(--radius-xl); box-shadow: none; }
+.bg-card                { background-color: var(--card-bg-color); border: 1px solid var(--color-border ); border-radius: var(--border-radius); box-shadow: none; }
 
 /* Stats cards */
 .stats-overview         { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -136,7 +137,12 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
 .card-dark .stat-card-label,
 .card-dark .percentage-label
                         { color: color-mix(in srgb, var(--color-on-accent) 65%, transparent); }
-
+.btn--sm                { padding: 0.3125rem 0.625rem; font-size: 0.78125rem; }
+.btn--primary           { background: var(--color-secondary-300); border-color: var(--color-border); color: var(--color-primary); }
+.btn--primary:hover:not(:disabled) 
+                        { background: var(--color-secondary-400); border-color: var(--color-secondary-400); }                      
+.btn--primary:hover:not(:disabled) 
+                        { background: var(--color-accent);border-color: var(--color-secondary-300);}
 /* ── Power / data display ─────────────────────────────────────────────────── */
 .power-value            { font-size: var(--font-size-5xl); font-weight: var(--font-weight-black); line-height: 1; margin: var(--gap-md) 0; color: var(--color-text-primary); letter-spacing: -0.03em; }
 .power-unit             { font-size: var(--font-size-xl); font-weight: var(--font-weight-medium); margin-left: var(--gap-sm); color: var(--color-text-secondary); }
@@ -157,8 +163,8 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
 .grid-cols-3            { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4            { grid-template-columns: repeat(4, 1fr); }
 
-input , select          { width: 100%;padding: 0.4375rem 0.75rem;border:1px solid var(--color-border);border-radius: var(--radius-sm);font-size: 0.8125rem;color: var(--color-text-primary);background: var(--color-secondary-100);outline: none;box-sizing: border-box;transition: border-color 0.15s;}
-input:focus             { border-color: var(--color-secondary-500); }
+input , select          { width: 100%;padding: 0.4375rem 0.75rem;border:1px solid var(--color-border);border-radius: var(--radius-sm);font-size: 0.8125rem;color: var(--color-text-primary);background: var(--color-secondary-50);outline: none;box-sizing: border-box;transition: border-color 0.15s;}
+input:focus             { border-color: var(--color-secondary-300);background: var(--color-secondary-100); }
 input::placeholder      { color: var(--color-text-tertiary); }
 
 @media (max-width: 1024px) {
@@ -187,7 +193,7 @@ input::placeholder      { color: var(--color-text-tertiary); }
 
 /* ── Layout helpers ───────────────────────────────────────────────────────── */
 .info-section           { height: calc(100vh - 4rem); }
-.hero-card              { height: calc(100vh - 9rem);border-radius: var(--radius-lg); }
+.hero-card              { height: calc(100vh - 9rem);}
 .right-section          { min-width: 320px; }
 .canvas                 { min-height: calc(100vh - 4rem); overflow-y: auto; }
 .inner-canvas           { min-height: calc(100vh - 7rem); }
@@ -218,5 +224,6 @@ img[src*="stat"], img[src*="icon"], .status-icon, .summary-item-icon {
 ::-webkit-scrollbar-thumb:hover   { background: var(--color-secondary-400); }
 ::-webkit-scrollbar-corner        { background: var(--color-secondary-100); }
 ::-webkit-scrollbar-buttons       { display:none; }
+
 
 * { scrollbar-width: thin; scrollbar-color: var(--color-secondary-300) var(--color-secondary-100); }

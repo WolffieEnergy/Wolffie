@@ -1,7 +1,7 @@
 <!-- src/components/settings/CoreSettings.vue -->
 <template>
   <div class="core-settings">
-    <UniversalSettingsPanel module-id="core" @saved="onSaved" />
+
         <!-- Theme Preset Switcher -->
     <div class="theme-section">
       <label class="theme-label">{{ t('settings.appearance.theme') }}</label>
@@ -27,7 +27,7 @@
         {{ t('settings.core.restart') }}
       </button>
     </div>-->
-
+        <UniversalSettingsPanel module-id="core" @saved="onSaved" />
   </div>
 </template>
 

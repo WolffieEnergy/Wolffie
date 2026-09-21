@@ -192,11 +192,15 @@ const renderChart = () => {
 
   const ctx = chartCanvas.value.getContext('2d');
   
-  // Range mode (30d/7d/year) is determined by the requested period, not by
-  // sniffing row shape — some range API responses carry both 'date' and
-  // 'timestamp' fields, which broke detection for the 30-day view.
+  // Lees de actieve CSS-variabelen van het huidige thema
+  const style = getComputedStyle(document.documentElement);
+  const colorSolar   = style.getPropertyValue('--chart-solar').trim()   || '#636B2F';
+  const colorGrid    = style.getPropertyValue('--chart-grid').trim()    || '#4A6B82';
+  const colorBattery = style.getPropertyValue('--chart-battery').trim() || '#C87D55';
+  const colorYield   = style.getPropertyValue('--chart-yield').trim()   || '#D4A359';
+  const colorAxis    = style.getPropertyValue('--chart-axis').trim()    || '#857A6D';
+
   const isRangeData = ['last-7-days', 'last-30-days', 'last-365-days'].includes(props.period);
-  
   // Calculate min/max to align zero lines.
   // Range mode (30d / year bars) uses summed kWh fields; intraday uses instantaneous power.
   const powerValues = isRangeData ? chartData.value.flatMap(d => [
@@ -252,179 +256,109 @@ const renderChart = () => {
     data: {
       labels,
       datasets: isRangeData ? [
-        // ── 30-day / year range mode: grouped bars, one per available metric ──
         {
           label: 'Solar (kWh)',
           data: chartData.value.map(d => d.solar || 0),
-          backgroundColor: '#f59e0b',
-          borderRadius: 2,
-          borderSkipped: false,
-          yAxisID: 'y'
+          backgroundColor: colorSolar,
+          borderRadius: 2, borderSkipped: false, yAxisID: 'y'
         },
         {
           label: 'Home (kWh)',
           data: chartData.value.map(d => d.home || 0),
-          backgroundColor: '#3b82f6',
-          borderRadius: 2,
-          borderSkipped: false,
-          yAxisID: 'y'
+          backgroundColor: colorYield,
+          borderRadius: 2, borderSkipped: false, yAxisID: 'y'
         },
         {
           label: 'Grid Import (kWh)',
           data: chartData.value.map(d => d.grid_import || 0),
-          backgroundColor: '#ef4444',
-          borderRadius: 2,
-          borderSkipped: false,
-          yAxisID: 'y'
+          backgroundColor: colorGrid,
+          borderRadius: 2, borderSkipped: false, yAxisID: 'y'
         },
         {
           label: 'Grid Export (kWh)',
           data: chartData.value.map(d => d.grid_export || 0),
-          backgroundColor: '#fb923c',
-          borderRadius: 2,
-          borderSkipped: false,
-          yAxisID: 'y'
+          backgroundColor: colorGrid,
+          borderRadius: 2, borderSkipped: false, yAxisID: 'y'
         },
         {
           label: 'Battery (net kWh)',
           data: chartData.value.map(d => d.battery_net || 0),
-          backgroundColor: '#10b981',
-          borderRadius: 2,
-          borderSkipped: false,
-          yAxisID: 'y'
+          backgroundColor: colorBattery,
+          borderRadius: 2, borderSkipped: false, yAxisID: 'y'
         }
       ] : props.mode === 'bar' ? [
-        // ── Mobile stacked bar mode ──────────────────────────────────────
         {
           label: 'Solar',
           data: chartData.value.map(d => d.solar ?? null),
-          backgroundColor: '#f59e0b',
-          stack: 'pos',
-          yAxisID: 'y',
-          borderRadius: 1,
-          borderSkipped: false,
+          backgroundColor: colorSolar,
+          stack: 'pos', yAxisID: 'y', borderRadius: 1, borderSkipped: false,
         },
         {
           label: 'Battery discharge',
-          data: chartData.value.map(d => {
-            const p = d.battery_power || 0;
-            return p > 0 ? p : 0;
-          }),
-          backgroundColor: 'rgba(16,185,129,0.7)',
-          stack: 'pos',
-          yAxisID: 'y',
-          borderRadius: 1,
-          borderSkipped: false,
+          data: chartData.value.map(d => (d.battery_power > 0 ? d.battery_power : 0)),
+          backgroundColor: colorBattery,
+          stack: 'pos', yAxisID: 'y', borderRadius: 1, borderSkipped: false,
         },
         {
           label: 'Home',
-          data: chartData.value.map(d => d.home ? -d.home : null),
-          backgroundColor: '#3b82f6',
-          stack: 'neg',
-          yAxisID: 'y',
-          borderRadius: 1,
-          borderSkipped: false,
+          data: chartData.value.map(d => (d.home ? -d.home : null)),
+          backgroundColor: colorYield,
+          stack: 'neg', yAxisID: 'y', borderRadius: 1, borderSkipped: false,
         },
         {
           label: 'Grid',
-          data: chartData.value.map(d => d.grid ? -d.grid : null),
-          backgroundColor: '#ef4444',
-          stack: 'neg',
-          yAxisID: 'y',
-          borderRadius: 1,
-          borderSkipped: false,
+          data: chartData.value.map(d => (d.grid ? -d.grid : null)),
+          backgroundColor: colorGrid,
+          stack: 'neg', yAxisID: 'y', borderRadius: 1, borderSkipped: false,
         },
         {
           label: 'Battery charge',
-          data: chartData.value.map(d => {
-            const p = d.battery_power || 0;
-            return p < 0 ? p : 0;
-          }),
-          backgroundColor: 'rgba(16,185,129,0.4)',
-          stack: 'neg',
-          yAxisID: 'y',
-          borderRadius: 1,
-          borderSkipped: false,
+          data: chartData.value.map(d => (d.battery_power < 0 ? d.battery_power : 0)),
+          backgroundColor: colorBattery,
+          stack: 'neg', yAxisID: 'y', borderRadius: 1, borderSkipped: false,
         },
         {
-          // SoC always a line, even in bar mode
           label: 'SoC',
           data: chartData.value.map(d => d.battery_soc || 0),
-          type: 'line',
-          borderColor: 'rgba(107,114,128,1)',
-          fill: false,
-          yAxisID: 'y1',
-          borderDash: [6, 3],
-          tension: 0.4,
-          pointRadius: 0,
-          borderWidth: 1.5,
-          pointHoverRadius: 4,
+          type: 'line', borderColor: colorAxis, fill: false, yAxisID: 'y1',
+          borderDash: [6, 3], tension: 0.4, pointRadius: 0, borderWidth: 1.5,
         },
       ] : [
-        // ── Desktop line mode (original) ─────────────────────────────────
+        // Desktop line mode
         {
           label: 'SoC',
           data: chartData.value.map(d => d.battery_soc || 0),
-          borderColor: 'rgba(107,114, 128, 1)',
-          backgroundColor: 'rgba(107, 114, 128, 0.1)',
-          fill: false,
-          yAxisID: 'y1',
-          borderDash: [10, 3],
-          tension: 0.4,
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHoverRadius: 4,
-          pointStyle: 'dash'
+          borderColor: colorAxis,
+          fill: false, yAxisID: 'y1', borderDash: [10, 3], tension: 0.4, pointRadius: 0, borderWidth: 1
         },
         {
           label: 'Solar',
           data: chartData.value.map(d => d.solar || 0),
-          borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245, 158, 11, 0.05)',
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y',
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHoverRadius: 4
+          borderColor: colorSolar,
+          backgroundColor: colorSolar + '1A', // 10% opacity hex suffix
+          fill: true, tension: 0.4, yAxisID: 'y', pointRadius: 0, borderWidth: 1.5
         },
         {
           label: 'Home',
           data: chartData.value.map(d => d.home || 0),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: false,
-          tension: 0.4,
-          yAxisID: 'y',
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHoverRadius: 4
+          borderColor: colorYield,
+          backgroundColor: colorYield + '1A',
+          fill: false, tension: 0.4, yAxisID: 'y', pointRadius: 0, borderWidth: 1.5
         },
         {
           label: 'Grid',
           data: chartData.value.map(d => d.grid || 0),
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          fill: false,
-          tension: 0.4,
-          yAxisID: 'y',
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHoverRadius: 4
+          borderColor: colorGrid,
+          backgroundColor: colorGrid + '1A',
+          fill: false, tension: 0.4, yAxisID: 'y', pointRadius: 0, borderWidth: 1.5
         },
         {
           label: 'Battery',
           data: chartData.value.map(d => d.battery_power || 0),
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16,185, 129, 0.1)',
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y',
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHoverRadius: 4
+          borderColor: colorBattery,
+          backgroundColor: colorBattery + '1A',
+          fill: true, tension: 0.4, yAxisID: 'y', pointRadius: 0, borderWidth: 1.5
         }
-
       ]
     },
     options: {
@@ -619,10 +553,10 @@ onUnmounted(() => {
 .tt-label                       { flex: 1;font-size: 13px;color: #6b7280;}
 .tt-value                       { font-size: 13px;font-weight: 600;color: #111827;text-align: right;font-variant-numeric: tabular-nums;}
 
-.stat-card.solar .tt-dot        { background-color: #f59e0b; }
-.stat-card.home .tt-dot         { background-color: #3b82f6; }
-.stat-card.grid .tt-dot         { background-color: #ef4444; }
-.stat-card.battery .tt-dot      { background-color: #10b981; }
+.stat-card.solar .tt-dot        { background-color: var(--chart-solar); }
+.stat-card.home .tt-dot         { background-color: var(--chart-yield); }
+.stat-card.grid .tt-dot         { background-color: var(--chart-grid); }
+.stat-card.battery .tt-dot      { background-color: var(--chart-battery); }
 .energy-flow-graph              { width: 100%;position: relative;height: v-bind(height);}
 .loading-state, .error-state    { display: flex;flex-direction: column;align-items: center;justify-content: center;height: 100%;gap: 12px;font-family: 'Rubik', sans-serif;}
 .loading-state span             { color: var(--color-text-secondary, #6b7280);font-size: 14px;}

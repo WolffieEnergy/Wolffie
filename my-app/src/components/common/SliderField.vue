@@ -58,30 +58,10 @@ defineEmits(['update:modelValue']);
 </script>
 
 <style scoped>
-.slider-field { display: flex; flex-direction: column; gap: 0.3rem; }
-
-.field__label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.field__label {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #374151;
-}
-.field__value {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #111827;
-  background: #e5e7eb;
-  padding: 0.1rem 0.5rem;
-  border-radius: 3px;
-  min-width: 54px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
+.slider-field                 { display: flex; flex-direction: column; gap: 0.3rem; }
+.field__label-row             { display: flex;justify-content: space-between;align-items: center;}
+.field__label                 { font-size: 0.8rem;font-weight: 500;color: var(--color-secondary-500);}
+.field__value                 { font-size: 0.8rem;font-weight: 600;color: var(--color-primary);background: var(--color-background);padding: 0.1rem 0.5rem;border: 1px solid var(--border-color);border-radius: 3px;min-width: 54px;text-align: center;font-variant-numeric: tabular-nums;}
 .range {
   width: 100%;
   -webkit-appearance: none;

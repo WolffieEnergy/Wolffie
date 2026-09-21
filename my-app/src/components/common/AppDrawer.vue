@@ -87,7 +87,7 @@ function close() {
 /* ── Backdrop ────────────────────────────────────────────────────────────── */
 .drawer-backdrop            { background: rgba(17, 24, 39, 0.2); }
 /* ── Drawer panel ────────────────────────────────────────────────────────── */
-.drawer                     { width: 520px; max-width: 100vw;background-color: var( --color-card); margin:0;height:100%}
+.drawer                     { width: 520px; max-width: 100vw;background-color: var( --color-background); margin:0;height:100%}
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .drawer__header             { padding: 1.125rem 1.25rem; }
 .drawer__title              { font-size: 0.9375rem; }

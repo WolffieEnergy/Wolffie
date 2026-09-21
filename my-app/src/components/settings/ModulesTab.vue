@@ -262,7 +262,7 @@
       <template #footer>
         <button class="btn btn--sm" @click="uploadDrawer.visible = false">{{ t('common.cancel') }}</button>
         <button
-          class="btn btn--sm btn--primary"
+          class="btn btn--sm btn--secondary"
           :class="{ 'btn--busy': uploading }"
           :disabled="!pendingFile || uploading"
           @click="installPending"
@@ -806,7 +806,7 @@ onUnmounted(() => {
 .dot--disabled            { background: #cbd5e1; }
 
 /* Type badge */
-.type-badge               { display: inline-block; padding: 0.125rem 0.5rem;font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;border-radius: var(--radius-sm); background-color: var(--color-secondary-400); color: var(--color-primary);}
+.type-badge               { display: inline-block; padding: 0.125rem 0.5rem;font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;border-radius: var(--radius-sm); background-color: var(--color-secondary-200); color: var(--color-primary);}
 /* Runtime values */
 .meta-value               { font-size: 0.8125rem; color: var(--color-secondary-300); font-weight: 500; }
 .meta-value.stale         { color: #94a3b8; }

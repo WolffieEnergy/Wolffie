@@ -138,64 +138,28 @@ const slotColumns = computed(() =>
 
 /* ── Search box ───────────────────────────────────────────────────────────── */
 .app-table__search        { position: relative;display: flex;align-items: center;}
-.app-table__search-icon   { 
-  position: absolute;
-  left: 0.55rem;
-  color: #9ca3af;
-  pointer-events: none;
-}
-.app-table__search-input {
-  padding: 0.3125rem 0.725rem 0.3125rem 1.5rem;
-  border: 1px solid var(--color-secondary-300);
- border-radius : var(--radius-sm);
-  font-size: 0.78125rem;
-  color: #111827;
-  background: var(--color-background);
-  outline: none;
-  width: 30px;
-  transition: border-color 0.15s, width 0.2s;
-}
-.app-table__search-input:focus       { border-color: var(--color-secondary-200); width: 200px; }
-.app-table__search-input::-webkit-search-cancel-button { display: none; }
+.app-table__search-icon   { position: absolute;left: 0.55rem;color: var(--color-secondary-400);pointer-events: none;}
+.app-table__search-input      { padding: 0.3125rem 0.725rem 0.3125rem 1.5rem;border: 1px solid var(--color-secondary-300);border-radius : var(--radius-sm);font-size: 0.78125rem;color: var(--color-primary);background: var(--color-background);outline: none;width: 30px;transition: border-color 0.15s, width 0.2s;}
+.app-table__search-input:focus       
+                              { border-color: var(--color-secondary-200); width: 200px; }
+.app-table__search-input::-webkit-search-cancel-button 
+                              { display: none; }
 
 /* ── Strip library card shadow / padding ──────────────────────────────────── */
-.app-table__datatable .bh-datatable-wrapper {
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-}
-
+.app-table__datatable .bh-datatable-wrapper 
+                              {border: none !important;box-shadow: none !important;padding: 0 !important;border-radius: 0 !important;background: transparent !important;}
 /* Hide the library's own search input (we provide ours in the toolbar) */
 .app-table__datatable .bh-datatable-search { display: none !important; }
 
 /* ── Table element ────────────────────────────────────────────────────────── */
-.app-table__datatable table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
+.app-table__datatable table   {width: 100%;border-collapse: collapse;font-size: 0.8125rem;}
 
 /* ── Header ───────────────────────────────────────────────────────────────── */
 .app-table__datatable thead tr {
   border-bottom: 1px solid var(--color-secondary-300) !important;
   background: transparent !important;
 }
-.app-table__datatable th {
-  padding: 0.5rem 0.75rem !important;
-  text-align: left !important;
-  font-size: 0.7rem !important;
-  font-weight: 600 !important;
-  text-transform: lowercase !important;
-  letter-spacing: 0.06em !important;
-  color: #6b7280 !important;
-  white-space: nowrap;
-  background: transparent !important;
-  border: none !important;
-  user-select: none;
-}
-
+.app-table__datatable th      {padding: 0.5rem 0.75rem !important;text-align: left !important;font-size: 0.7rem !important;font-weight: 600 !important;text-transform: lowercase !important;letter-spacing: 0.06em !important;color: #6b7280 !important;white-space: nowrap;background: transparent !important;border: none !important;user-select: none;}
 /* Sort indicators */
 .app-table__datatable th .bh-sort-icon         { color: var(--color-secondary-500); margin-left: 3px; }
 .app-table__datatable th.asc  .bh-sort-icon,
@@ -298,5 +262,5 @@ const slotColumns = computed(() =>
 .bh-pagination .bh-page-item 
                               { background-color: var(--color-background)!important;color: var(--color-primary)!important;border-radius : var(--radius-sm);border: 1px solid var(--secondary-300);}
 .bh-pagination-info .bh-mr-2  { min-width: 200px;} 
-
+.btn--primary                  { background-color: var(--color-primary);color: var(--color-background);border-radius : var(--radius-sm);}
 </style>

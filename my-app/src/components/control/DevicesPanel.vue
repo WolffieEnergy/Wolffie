@@ -408,18 +408,18 @@ onUnmounted(() => {
 <style scoped>
 .devices-panel            { display: flex; flex-direction: column; gap: 0.875rem; }
 .led-cell                 { display: flex; align-items: center; gap: 0.5rem; }
-.led-bar                  { flex: 1; min-width: 44px; height: 3px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
-.led-bar__fill            { height: 100%; background: #374151; transition: width 0.3s; }
+.led-bar                  { flex: 1; min-width: 44px; height: 3px; background: var(--color-background); border-radius: 2px; overflow: hidden; }
+.led-bar__fill            { height: 100%; background: var(--color-primary); transition: width 0.3s; }
 .drawer-header-graph      { margin: -1rem -1.25rem 1rem -1.25rem;  padding: 0.75rem 1.25rem;  }
-.graph-label              { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
+.graph-label              { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--color-secondary-500); margin-bottom: 4px; }
 .drawer-meta-section      { padding-bottom: 1.25rem; }
 .meta-grid                { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 .meta-card                { background: var(--color-secondary-100); padding: 0.5rem;  }
-.meta-card label          { display: block; font-size: 0.6rem; text-transform: uppercase; color: #6b7280; font-weight: 600; }
-.meta-value               { font-size: 0.75rem; font-weight: 600; color: #111827; }
+.meta-card label          { display: block; font-size: 0.6rem; text-transform: uppercase; color: var(--color-secondary-500); font-weight: 600; }
+.meta-value               { font-size: 0.75rem; font-weight: 600; color: var(--color-primary) }
 .form-field--port         { width: 80px; }
-.req                      { color: #ef4444; margin-left: 2px; }
-.dynamic-field-wrapper    { border-left: 2px solid #f3f4f6; padding-left: 1rem; }
+.req                      { color: var(--color-error); margin-left: 2px; }
+.dynamic-field-wrapper    { border-left: 2px solid var(--color-border); padding-left: 1rem; }
 .toggle--busy             { opacity: 0.5; pointer-events: none; }
 
 /* On mobile, action buttons are always visible (no hover needed on touch) */

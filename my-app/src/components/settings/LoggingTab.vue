@@ -218,115 +218,31 @@ onMounted(loadEntries);
 </script>
 
 <style scoped>
-.logging-tab { display: flex; flex-direction: column; gap: 0.75rem; }
+.logging-tab                { display: flex; flex-direction: column; gap: 0.75rem; }
+.marked-toggle              { display: flex; align-items: center;gap: 0.5rem;font-size: 0.8125rem;color: var(--color-text-secondary);cursor: pointer;user-select: none;}
+.marked-toggle__input       { display: none; }
+.marked-toggle__track       { position: relative;width: 34px;height: 18px;flex-shrink: 0;background: var(--color-border);border-radius: 999px;transition: background 0.15s;}
+.marked-toggle__thumb       { position: absolute;top: 2px;left: 2px;width: 14px;height: 14px;background: var(--color-background);border-radius: 50%;box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);transition: transform 0.15s;}
+.marked-toggle__input:checked + .marked-toggle__track 
+                            { background: var(--color-primary);}
+.marked-toggle__input:checked + .marked-toggle__track .marked-toggle__thumb 
+                            { transform: translateX(16px);}
+.timestamp-cell             { font-variant-numeric: tabular-nums;font-size: 0.78125rem;color: var(--color-text-secondary);white-space: nowrap;}
+.level-badge                { display: inline-block;padding: 0.125rem 0.5rem;font-size: 0.6875rem;font-weight: 700;letter-spacing: 0.04em;border-radius: var(--radius-sm, 4px);}
+.level-badge--info          { background: var(--color-info); color: var(--color-primary); }
+.level-badge--warn          { background: var(--color-warn); color: var(--color-primary); }
+.level-badge--error         { background: var(--color-error); color: var(--color-primary); }
+.level-badge--debug         { background: var(--color-debug); color: var(--color-primary); }
 
-.marked-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  user-select: none;
-}
-.marked-toggle__input { display: none; }
-.marked-toggle__track {
-  position: relative;
-  width: 34px;
-  height: 18px;
-  flex-shrink: 0;
-  background: #d1d5db;
-  border-radius: 999px;
-  transition: background 0.15s;
-}
-.marked-toggle__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s;
-}
-.marked-toggle__input:checked + .marked-toggle__track {
-  background: var(--color-primary, #111827);
-}
-.marked-toggle__input:checked + .marked-toggle__track .marked-toggle__thumb {
-  transform: translateX(16px);
-}
-
-.timestamp-cell {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.78125rem;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.level-badge {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  border-radius: var(--radius-sm, 4px);
-}
-.level-badge--info  { background: #e0f2fe; color: #0369a1; }
-.level-badge--warn  { background: #fef3c7; color: #92400e; }
-.level-badge--error { background: #fee2e2; color: #991b1b; }
-.level-badge--debug { background: #f3f4f6; color: #4b5563; }
-
-.message-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  max-width: 640px;
-}
-.message-cell:hover .message-cell__icon { opacity: 1; }
-.message-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78125rem;
-}
-.message-cell__icon {
-  flex-shrink: 0;
-  opacity: 0.35;
-  font-size: 0.8rem;
-  transition: opacity 0.15s;
-}
-
-.marked-icon {
-  color: #d97706;
-  font-size: 0.95rem;
-}
-
-.log-detail__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-.log-detail__time {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.log-detail__message {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8125rem;
-  background: var(--color-bg-secondary, #f9fafb);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm, 4px);
-  padding: 0.75rem;
-  max-height: 50vh;
-  overflow-y: auto;
-}
+.message-cell               { display: flex;  align-items: center;  gap: 0.5rem;  cursor: pointer;  max-width: 640px;}
+.message-cell:hover .message-cell__icon 
+                            { opacity: 1; }
+.message-text               { overflow: hidden;text-overflow: ellipsis;white-space: nowrap;font-family: ui-monospace, SFMono-Regular, Menlo, monospace;font-size: 0.78125rem;}
+.message-cell__icon         { flex-shrink: 0;opacity: 0.35;font-size: 0.8rem;transition: opacity 0.15s;}
+.marked-icon                { color: var(--color-secondary);font-size: 0.95rem;}
+.log-detail__meta           { display: flex;align-items: center;gap: 0.75rem;margin-bottom: 0.75rem;}
+.log-detail__time           { font-size: 0.8125rem;color: var(--color-text-secondary);font-variant-numeric: tabular-nums;}
+.log-detail__message        { white-space: pre-wrap;word-break: break-word;font-family: ui-monospace, SFMono-Regular, Menlo, monospace;font-size: 0.8125rem;background: var(--color-bg-secondary, #f9fafb);border: 1px solid var(--color-border);border-radius: var(--radius-sm, 4px);  padding: 0.75rem;max-height: 50vh;  overflow-y: auto;}
 </style>
 
 <style>
@@ -334,7 +250,6 @@ onMounted(loadEntries);
    third-party datatable's DOM — colors the whole row when it contains a
    marked-icon element. AppTable exposes no row-class hook, so this avoids
    modifying the shared component just for this one view. */
-.logging-tab .app-table__datatable tbody tr:has(.marked-icon) {
-  background: #fffbeb !important;
-}
+.logging-tab .app-table__datatable tbody tr:has(.marked-icon) 
+                            { background: var(--color-accent) !important;}
 </style>

@@ -139,7 +139,7 @@ function cancel() {
 }
 .btn:hover:not(:disabled) { background: var(--color-secondary-100); border-color: var(--color-secondary-400); }
 .btn--sm          { padding: 0.3125rem 0.625rem; font-size: 0.78125rem; }
-.btn--primary     { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.btn--primary     { background: var(--color-secondary-300); border-color: var(--color-border); color: var(--color-primary); }
 .btn--primary:hover:not(:disabled) { background: var(--color-secondary-400); border-color: var(--color-secondary-400); }
 .btn--destructive { color: #991b1b; border-color: #fca5a5; background: #fef2f2; }
 .btn--destructive:hover:not(:disabled) { background: #fee2e2; border-color: #f87171; }

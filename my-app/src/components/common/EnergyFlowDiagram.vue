@@ -1,4 +1,5 @@
 <template>
+
   <div class="flow-diagram">
     <svg
       :viewBox="`0 0 ${W} ${H}`"
@@ -83,7 +84,7 @@
       <!-- ── Battery node ───────────────────────────────────────── -->
       <g :transform="`translate(${POS.battery.x}, ${POS.battery.y})`">
         <circle :r="NR + 2" fill="none" stroke="var(--color-secondary-100,#f3f4f6)" stroke-width="0"/>
-        <circle :r="NR+1" fill="batteryArcColor" :stroke="batteryArcColor" stroke-width="4" stroke-linecap="round" :stroke-dasharray="batteryArcDash" transform="rotate(-90 0 0)" class="hub-soc-arc"/>
+        <circle :r="NR+1" fill="batteryArcColor" :stroke="batteryArcColor" stroke-width="6" stroke-linecap="-round" :stroke-dasharray="batteryArcDash" transform="rotate(-90 0 0)" class="hub-soc-arc"/>
         <circle :r="NR" class="node-circle node-circle--active"/>
         <foreignObject :x="-NR * 0.5" :y="-NR * 0.5" :width="NR" :height="NR">
           <div xmlns="http://www.w3.org/1999/xhtml" class="node-icon-wrap">
@@ -217,7 +218,7 @@ const W = 300;
 // H grows automatically to fit however many device rows are needed.
 // Collapsed: fixed 370px. Expanded: smart.y + (rows × STEP_Y) + bottom margin.
 const H = computed(() => {
-  if (!smartExpanded.value || devicesStore.devices.length === 0) return 370;
+  if (!smartExpanded.value || devicesStore.devices.length === 0) return POS.smart.y + 46; // 316
   const rows = Math.ceil(devicesStore.devices.length / COLS);
   return POS.smart.y + STEP_Y * rows + NR + 50; // NR for last circle, 50 for label + margin
 });
@@ -310,10 +311,10 @@ const batteryArcDash = computed(() => {
   return `${filled} ${SOC_CIRC - filled}`;
 });
 const batteryArcColor = computed(() => {
-  if (battW.value < -50) return 'var(--color-primary,#f97316)';
-  if (battW.value >  50) return 'var(--color-secondary-300)';
-  if (battSoc.value <= 20) return 'var(--color-danger-700,#f43f5e)';
-  return 'var(--color-success-500,#10b981)';
+  if (battW.value < -50) return 'var(--chart-battery)';
+  if (battW.value >  50) return 'var(--chart-battery)';
+  if (battSoc.value <= 20) return 'var(--chart-battery)';
+  return 'var(--chart-battery)';
 });
 const battStatusLabel = computed(() => {
   if (battW.value < -50) return 'charging';
@@ -454,7 +455,7 @@ const deviceHaloData = computed(() => {
 .hub-soc-arc          { transition: stroke-dasharray .6s ease; }
 
 .node-circle           { transition: fill .3s; }
-.node-circle--active   { fill: var(--card-bg-color); stroke: var(--color-secondary-400); stroke-width: .5; filter: drop-shadow(0 2px 2px var(--color-secondary-300)); }
+.node-circle--active   { fill: var(--card-bg-color); stroke: var(--color-secondary-500); stroke-width: 1;/*filter: drop-shadow(0 2px 2px var(--color-secondary-300));*/ }
 .node-circle--inactive { fill: var(--color-secondary-100,#f3f4f6); stroke: var(--color-secondary-200,#e5e7eb); stroke-width: 1; }
 .node-circle--ups      { fill: var(--color-danger-bg); stroke: var(--color-danger-border); stroke-width: 1; animation: ups-node-pulse 1.2s ease-in-out infinite; }
 
