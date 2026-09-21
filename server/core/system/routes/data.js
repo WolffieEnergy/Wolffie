@@ -283,6 +283,100 @@ async function _buildStrategyDecisionBlock() {
   };
 }
 
+/**
+ * Build the averages block — 14-day mean daily totals, used as the reference
+ * scale for the overview gauges and printed in the caption under each one.
+ *
+ * Contract consumed by Dashboard.vue:
+ *   averages.avg_solar_14d, avg_load_14d, avg_grid_import_14d, avg_grid_export_14d
+ * Each is kWh/day, or null when there isn't enough history. Null renders as
+ * "no avg yet" / a hidden arc rather than a fabricated fraction.
+ *
+ * Completeness is enforced PER SERIES: a day counts toward a series' average
+ * only if that column has 24 non-null hours. Load derivation returns NULL
+ * unless all three domains are present, so load has gaps that solar and grid
+ * do not — a single shared "complete day" filter would discard good solar
+ * data to protect load. Partial days are dropped, never scaled: they
+ * understate their own total and would bias every average low.
+ *
+ * Column sources (verified against the live DB, not assumed):
+ *   solar  pv_power_avg        W, hourly mean → /1000 = kWh for that hour
+ *   load   load_power_avg      W, hourly mean → /1000
+ *   grid   grid_import_kwh / grid_export_kwh   already kWh
+ * The parallel *_wh columns (pv_energy_wh, load_consumption_wh,
+ * grid_import_wh, grid_export_wh) are a dead migration leftover — 0 rows
+ * populated in the last 30 days. Do not reach for them.
+ * solar_to_grid_kwh is NOT used: it is known-mislabelled (holds solar→battery).
+ */
+const AVG_WINDOW_DAYS = 14;   // trailing complete days — consumption is seasonal
+const AVG_MIN_DAYS    = 7;    // below this, report null rather than a weak mean
+const AVG_CACHE_MS    = 60 * 60 * 1000;  // only changes when a day completes
+
+let _averagesCache = { value: null, computedAtMs: 0 };
+
+/**
+ * Mean daily total for one series.
+ * `expr` is the per-hour contribution in kWh; `col` is the column whose
+ * non-nullness defines a complete hour. Both are module constants, never
+ * request input.
+ */
+async function _avgDailyTotal(col, expr) {
+  // energy_hours.timestamp is LOCAL time — date() buckets local days directly.
+  const [rows] = await db.pool.query(`
+    WITH daily AS (
+      SELECT date(timestamp) AS d, SUM(${expr}) AS total
+      FROM   energy_hours
+      WHERE  ${col} IS NOT NULL
+      GROUP  BY d
+      HAVING COUNT(${col}) = 24
+      ORDER  BY d DESC
+      LIMIT  ${AVG_WINDOW_DAYS}
+    )
+    SELECT AVG(total) AS avg_kwh, COUNT(*) AS days FROM daily
+  `);
+
+  const row  = rows?.[0];
+  const days = Number(row?.days) || 0;
+  if (days < AVG_MIN_DAYS || row?.avg_kwh === null) return { value: null, days };
+
+  return { value: Math.round(Number(row.avg_kwh) * 100) / 100, days };
+}
+
+async function _buildAveragesBlock() {
+  const nowMs = Date.now();
+  if (_averagesCache.value && nowMs - _averagesCache.computedAtMs < AVG_CACHE_MS) {
+    return _averagesCache.value;
+  }
+
+  const [solar, load, imp, exp] = await Promise.all([
+    _avgDailyTotal('pv_power_avg',    'pv_power_avg / 1000.0'),
+    _avgDailyTotal('load_power_avg',  'load_power_avg / 1000.0'),
+    _avgDailyTotal('grid_import_kwh', 'grid_import_kwh'),
+    // grid_export_kwh is signed: negative = energy leaving the house.
+    // Verified against the live DB (min -4.803, max 0.0). Import is the
+    // opposite convention (min 0.0, max 3.589) and needs no negation.
+    // The gauge caption wants a positive magnitude, so flip the sign here.
+    _avgDailyTotal('grid_export_kwh', '-grid_export_kwh'),
+  ]);
+
+  const value = {
+    avg_solar_14d:       solar.value,
+    avg_load_14d:        load.value,
+    avg_grid_import_14d: imp.value,
+    avg_grid_export_14d: exp.value,
+    // Sample size per series — they differ, because completeness differs.
+    sampleDays: {
+      solar:       solar.days,
+      load:        load.days,
+      grid_import: imp.days,
+      grid_export: exp.days,
+    },
+  };
+
+  _averagesCache = { value, computedAtMs: nowMs };
+  return value;
+}
+
 // ── GET /api/system/summary ────────────────────────────────────────────────
 
 router.get('/summary', async (req, res) => {
@@ -465,6 +559,20 @@ router.get('/summary', async (req, res) => {
         lastCollectorRunAt: null,
         stale:              true,
         degradedSources:    [],
+      };
+    }
+
+    // averages — 14-day reference scales for the overview gauges
+    try {
+      responseBody.averages = await _buildAveragesBlock();
+    } catch (err) {
+      console.error('[summary] averages failed:', err.message);
+      responseBody.averages = {
+        avg_solar_14d:       null,
+        avg_load_14d:        null,
+        avg_grid_import_14d: null,
+        avg_grid_export_14d: null,
+        sampleDays:          null,
       };
     }
 

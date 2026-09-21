@@ -169,32 +169,33 @@ class HistoryController {
         }));
       }
 
-      const [snapshotStats] = await db.pool.query(
+      // Stats come from energy_daily, not from a second pass over raw snapshots.
+      //
+      // The previous version re-derived them with MAX(load_energy_today) etc.
+      // straight from energy_snapshots. That column is NULL in every row except
+      // the synthetic 'wolffie-core' ones, so SUM() returned 0 and the Home card
+      // showed 0.0 kWh even once the chart bars were correct — the two halves of
+      // this response were reading different sources.
+      //
+      // energy_daily is what the aggregator exists to produce: load is derived
+      // there, and the battery-efficiency correction is applied there. Summing it
+      // keeps the summary consistent with the bars above it and stops the
+      // controller re-implementing aggregation logic.
+      const [dailyStats] = await db.pool.query(
         `SELECT
-           SUM(daily_pv)        AS pv_generation,
-           SUM(daily_load)      AS load_consumption,
-           SUM(daily_import)    AS grid_import,
-           SUM(daily_export)    AS grid_export,
-           SUM(daily_charge)    AS battery_charge,
-           SUM(daily_discharge) AS battery_discharge
-         FROM (
-           SELECT
-             date(timestamp)                AS local_date,
-             MAX(solar_energy_today)        AS daily_pv,
-             MAX(load_energy_today)         AS daily_load,
-             MAX(grid_energy_import_today)  AS daily_import,
-             MAX(grid_energy_export_today)  AS daily_export,
-             MAX(battery_charge_today)      AS daily_charge,
-             MAX(battery_discharge_today)   AS daily_discharge
-           FROM energy_snapshots
-           WHERE date(timestamp) BETWEEN ? AND ?
-           GROUP BY local_date
-         ) daily_sums`,
+           SUM(pv_generation_kwh)     AS pv_generation,
+           SUM(load_consumption_kwh)  AS load_consumption,
+           SUM(grid_import_kwh)       AS grid_import,
+           SUM(grid_export_kwh)       AS grid_export,
+           SUM(battery_charge_kwh)    AS battery_charge,
+           SUM(battery_discharge_kwh) AS battery_discharge
+         FROM energy_daily
+         WHERE date BETWEEN ? AND ?`,
         [startDate, endDate]
       );
 
-      const stats = snapshotStats[0]
-        ? this.formatStats(snapshotStats[0])
+      const stats = dailyStats[0]
+        ? this.formatStats(dailyStats[0])
         : this.emptyStats();
 
       res.json({

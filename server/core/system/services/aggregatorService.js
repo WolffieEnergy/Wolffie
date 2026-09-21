@@ -1,27 +1,71 @@
 // server/core/system/services/aggregatorService.js
 //
-// Volledig herschreven voor SQLite (better-sqlite3 via database.js shim).
+// v2.0 — load derivation, fail-safe source gates, local-time windows.
 //
-// Wijzigingen t.o.v. de MySQL-versie:
-//   DATE_FORMAT(ts, '%Y-%m-%d %H:%i:00')  →  strftime('%Y-%m-%d %H:%M:00', ts)
-//   DATE_FORMAT(ts, '%Y-%m-%d %H:00:00')  →  strftime('%Y-%m-%d %H:00:00', ts)
-//   DATE_FORMAT(date, '%Y-%m')            →  strftime('%Y-%m', date)
-//   DATE(timestamp)                        →  date(timestamp)
-//   YEAR(date)                             →  CAST(strftime('%Y', date) AS INTEGER)
-//   MONTH(date)                            →  CAST(strftime('%m', date) AS INTEGER)
-//   HOUR(timestamp)                        →  CAST(strftime('%H', timestamp) AS INTEGER)
-//   CURDATE()                              →  date('now')
-//   DATE_SUB(CURDATE(), INTERVAL N DAY)   →  date('now', '-N days')
-//   CONCAT(a, b)                           →  a || b
-//   LPAD(month, 2, '0')                   →  printf('%02d', month)
-//   ON DUPLICATE KEY UPDATE col=VALUES()  →  ON CONFLICT(...) DO UPDATE SET col=excluded.col
-//   JSON_MERGE_PATCH()                     →  lees → merge in JS → schrijf terug
-//   SUBSTRING_INDEX(MAX(CONCAT(...)))     →  subquery met ORDER BY + LIMIT 1
+// CHANGES vs v1.x
+// ───────────────
+// 1. LOAD DERIVATION (root cause of home = 0 everywhere)
+//    `load_power` is NULL in every energy_snapshots row unless collectorManager's
+//    derive_home_load timer is armed. The old code gated load on
+//    sourceMap.home = find('home:read'), but nothing registers 'home:read' —
+//    so `source = NULL` never matched and load was NULL even when rows existed.
+//
+//    Now: prefer the authoritative wolffie-core row; fall back to SQL derivation
+//    from the three hardware domains. The fallback works identically on historical
+//    data, which is what makes the backfill possible.
+//
+//    Sign convention in energy_snapshots.battery_power is RAW AlphaESS:
+//        positive = DISCHARGING, negative = CHARGING
+//    (opposite to the canonical battery:read capability). Hence:
+//        load = solar + battery_raw + grid          (grid positive = import)
+//
+// 2. BATTERY EFFICIENCY
+//    Registers 0x0120/0x0122 are in the Household Battery block, alongside cell
+//    voltages and temperatures — they measure at the DC terminals. The AC-side
+//    equivalents (0x52E3/0x52E5) exist only in the Industry PCS block, not on
+//    this unit. So the naive balance overstates load by the conversion losses.
+//
+//        discharging (raw > 0): AC delivered  = raw * eff
+//        charging    (raw < 0): AC consumed   = raw / eff
+//
+//    eff is one-way efficiency, default 0.95 (≈90% round-trip). Configurable via
+//    system_settings category 'data_collection', key 'battery_efficiency'.
+//
+// 3. FAIL-SAFE SOURCE GATES
+//    _buildSourceMap() re-reads the capability registry every 60s. When a module
+//    drops its capability (single-client Modbus contention, settings save, etc.)
+//    the CASE stopped matching and ON CONFLICT DO UPDATE wrote NULL straight over
+//    two hours of good minute rows — which then propagated into hours.
+//
+//    Now every DO UPDATE uses COALESCE(excluded.col, col): a NULL never overwrites
+//    an existing value. Trade-off: a value can no longer be cleared by
+//    re-aggregation. Deliberate — stale beats destroyed.
+//
+// 4. LOCAL TIME THROUGHOUT
+//    SQLite datetime('now') returns UTC; every timestamp in this database is a
+//    local CET/CEST string with no offset marker. Every window was therefore
+//    skewed by the UTC offset (2h in summer), and the JS toISOString() date
+//    calculations picked the wrong day between 00:00 and 02:00 local.
+//    All bounds are now computed in JS local time and passed as parameters —
+//    no datetime('now') or toISOString() remains in this file.
+//
+// 5. REUSABLE WINDOWS
+//    Every aggregate method takes optional {from, to}. The live loop passes
+//    nothing (rolling window); scripts/rebuild-history.js passes explicit bounds.
+//    One implementation, no drift between live and backfill.
+//
+// KNOWN, DELIBERATELY UNTOUCHED
+//   - battery_temperature_avg still uses AVG(). Per the collector, battery_temp
+//     holds MAX cell temperature and averaging it destroys the degradation
+//     signal. Out of scope for this change; column name would need to change too.
 
 import db from '../../database.js';
 import capabilityRegistry from '../../capabilityRegistry.js';
+import settingsService from './settingsService.js';
 import { padName } from '../../utils/logger.js';
 const PREFIX = padName('Aggregator');
+
+const DEFAULT_BATTERY_EFFICIENCY = 0.95;
 
 class AggregatorService {
   constructor() {
@@ -29,7 +73,44 @@ class AggregatorService {
     this.aggregationInterval    = null;
     this.lastComparisonDate     = null;
     this.lastNightlyProfileDate = null;
+    this._lastEventPruneDate    = null;   // was unreachable dead code after `return`
   }
+
+  // ── Local-time helpers ──────────────────────────────────────────────────────
+  // Node's local timezone matches the collectors' timestamps. Never use
+  // toISOString() here — it converts to UTC and shifts the date.
+
+  _p(n) { return String(n).padStart(2, '0'); }
+
+  _localDate(d = new Date()) {
+    return `${d.getFullYear()}-${this._p(d.getMonth() + 1)}-${this._p(d.getDate())}`;
+  }
+
+  _localSecond(d = new Date()) {
+    return `${this._localDate(d)} ${this._p(d.getHours())}:${this._p(d.getMinutes())}:${this._p(d.getSeconds())}`;
+  }
+
+  _localMinute(d = new Date()) {
+    return `${this._localDate(d)} ${this._p(d.getHours())}:${this._p(d.getMinutes())}:00`;
+  }
+
+  _localHour(d = new Date()) {
+    return `${this._localDate(d)} ${this._p(d.getHours())}:00:00`;
+  }
+
+  _daysAgo(n, d = new Date()) {
+    const x = new Date(d);
+    x.setDate(x.getDate() - n);
+    return x;
+  }
+
+  _hoursAgo(n, d = new Date()) {
+    return new Date(d.getTime() - n * 3600 * 1000);
+  }
+
+  // ── Source resolution ───────────────────────────────────────────────────────
+  // 'home' is deliberately absent. Load is never owned by a hardware module —
+  // it is derived, either by collectorManager (source 'wolffie-core') or in SQL.
 
   _buildSourceMap() {
     const entries = capabilityRegistry.list();
@@ -38,10 +119,21 @@ class AggregatorService {
       solar:   find('solar:read'),
       battery: find('battery:read'),
       grid:    find('grid:read'),
-      home:    find('home:read'),
     };
-    this._lastEventPruneDate = null;
   }
+
+  async _batteryEfficiency() {
+    try {
+      const dc  = await settingsService.getCategory('data_collection');
+      const raw = parseFloat(dc?.battery_efficiency);
+      if (!isNaN(raw) && raw > 0 && raw <= 1) return raw;
+    } catch {
+      // settings unavailable — fall through to default
+    }
+    return DEFAULT_BATTERY_EFFICIENCY;
+  }
+
+  // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   start() {
     if (this.isRunning) {
@@ -73,29 +165,27 @@ class AggregatorService {
   async aggregate() {
     try {
       const sourceMap = this._buildSourceMap();
+      const eff       = await this._batteryEfficiency();
 
-      await this.aggregateMinutes(sourceMap);
+      await this.aggregateMinutes(sourceMap, eff);
       await this.aggregateHours();
-      await this.aggregateDaily(sourceMap);
+      await this.aggregateDaily(sourceMap, eff);
       await this.aggregateMonthly();
       await this.aggregateDevices();
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = this._localDate();
       const hour  = new Date().getHours();
 
-      // Forecast accuracy: eenmaal per dag, na uur 1
       if (this.lastComparisonDate !== today && hour >= 1) {
         await this.compareForecastWithActual();
         this.lastComparisonDate = today;
       }
 
-      // Nachtprofiel: eenmaal per dag, na uur 2
       if (this.lastNightlyProfileDate !== today && hour >= 2) {
         await this.calculateNightlyProfile();
         this.lastNightlyProfileDate = today;
-        
       }
-      // Event log pruning: once per day, after hour 3
+
       if (this._lastEventPruneDate !== today && hour >= 3) {
         try {
           const { default: eventLogService } = await import('./eventLogService.js');
@@ -110,18 +200,22 @@ class AggregatorService {
     }
   }
 
-  // ── Minuut-aggregatie ───────────────────────────────────────────────────────
+  // ── Minute aggregation ──────────────────────────────────────────────────────
+  //
+  // Rolling 2-hour window by default (not a cursor: different source modules may
+  // write at slightly different clock offsets, and a MAX(timestamp) cursor would
+  // drift ahead and permanently skip rows from slower sources).
+  //
+  // The inner subquery groups snapshots into minutes with each domain gated on
+  // its authoritative module. The outer SELECT derives load from those three
+  // aggregates — done outside the GROUP BY so each average is computed once.
 
-  async aggregateMinutes(sourceMap) {
+  async aggregateMinutes(sourceMap, eff, { from = null, to = null } = {}) {
     try {
-      // Rolling 2-hour window instead of a cursor.
-      // Reason: different source modules may use different clock offsets
-      // (UTC vs local time), causing cursor-based MAX(timestamp) to drift
-      // ahead and permanently skip rows from other sources.
-      // ON CONFLICT(timestamp) DO UPDATE re-writes existing rows safely.
-      //
-      // CASE WHEN source = ? ensures each domain's values come only from the
-      // authoritative module registered in capabilityRegistry.
+      const now      = new Date();
+      const winFrom  = from ?? this._localSecond(this._hoursAgo(2, now));
+      const winTo    = to   ?? this._localMinute(now);
+
       const [result] = await db.pool.query(`
         INSERT INTO energy_minutes (
           timestamp,
@@ -132,63 +226,101 @@ class AggregatorService {
           load_power_avg, sample_count
         )
         SELECT
-          strftime('%Y-%m-%d %H:%M:00', timestamp) AS minute_timestamp,
-          AVG(CASE WHEN source = ? THEN battery_soc   END),
-          MIN(CASE WHEN source = ? THEN battery_soc   END),
-          MAX(CASE WHEN source = ? THEN battery_soc   END),
-          AVG(CASE WHEN source = ? THEN battery_power END),
-          AVG(CASE WHEN source = ? THEN battery_temp  END),
-          AVG(CASE WHEN source = ? THEN grid_power    END),
-          MIN(CASE WHEN source = ? THEN grid_power    END),
-          MAX(CASE WHEN source = ? THEN grid_power    END),
-          AVG(CASE WHEN source = ? THEN solar_power   END),
-          MAX(CASE WHEN source = ? THEN solar_power   END),
-          AVG(CASE WHEN source = ? THEN load_power    END),
-          COUNT(*)
-        FROM energy_snapshots
-        WHERE timestamp >= datetime('now', '-2 hours')
-          AND timestamp <  strftime('%Y-%m-%d %H:%M:00', datetime('now'))
-        GROUP BY minute_timestamp
+          minute_timestamp,
+          soc_avg, soc_min, soc_max,
+          bat_avg, temp_avg,
+          grid_avg, grid_min, grid_max,
+          pv_avg, pv_max,
+
+          -- Load: authoritative wolffie-core row first, SQL derivation as fallback.
+          -- NULL (not 0) when no domain reported at all — a false zero in the
+          -- load series is indistinguishable from a genuinely idle house.
+          COALESCE(
+            core_load,
+            CASE
+              -- All three domains required. A partial balance is not a smaller
+              -- error, it is a wrong number: omitting a 1200 W battery term
+              -- reports 1700 W for a house actually drawing 437 W. NULL renders
+              -- as a gap; a wrong value renders as fact.
+              WHEN pv_avg IS NULL OR bat_avg IS NULL OR grid_avg IS NULL THEN NULL
+              ELSE MAX(
+                pv_avg
+                + CASE WHEN bat_avg > 0 THEN bat_avg * ? ELSE bat_avg / ? END
+                + grid_avg,
+                0)
+            END
+          ),
+          sample_count
+        FROM (
+          SELECT
+            strftime('%Y-%m-%d %H:%M:00', timestamp)              AS minute_timestamp,
+            AVG(CASE WHEN source = ? THEN battery_soc   END)      AS soc_avg,
+            MIN(CASE WHEN source = ? THEN battery_soc   END)      AS soc_min,
+            MAX(CASE WHEN source = ? THEN battery_soc   END)      AS soc_max,
+            AVG(CASE WHEN source = ? THEN battery_power END)      AS bat_avg,
+            AVG(CASE WHEN source = ? THEN battery_temp  END)      AS temp_avg,
+            AVG(CASE WHEN source = ? THEN grid_power    END)      AS grid_avg,
+            MIN(CASE WHEN source = ? THEN grid_power    END)      AS grid_min,
+            MAX(CASE WHEN source = ? THEN grid_power    END)      AS grid_max,
+            AVG(CASE WHEN source = ? THEN solar_power   END)      AS pv_avg,
+            MAX(CASE WHEN source = ? THEN solar_power   END)      AS pv_max,
+            AVG(CASE WHEN source = 'wolffie-core' THEN load_power END) AS core_load,
+            COUNT(*)                                              AS sample_count
+          FROM energy_snapshots
+          WHERE timestamp >= ?
+            AND timestamp <  ?
+          GROUP BY minute_timestamp
+        )
+        WHERE true   -- required: disambiguates upsert ON from a join ON (SQLite upsert parsing)
         ON CONFLICT(timestamp) DO UPDATE SET
-          battery_soc_avg         = excluded.battery_soc_avg,
-          battery_soc_min         = excluded.battery_soc_min,
-          battery_soc_max         = excluded.battery_soc_max,
-          battery_power_avg       = excluded.battery_power_avg,
-          battery_temperature_avg = excluded.battery_temperature_avg,
-          grid_power_avg          = excluded.grid_power_avg,
-          grid_power_min          = excluded.grid_power_min,
-          grid_power_max          = excluded.grid_power_max,
-          pv_power_avg            = excluded.pv_power_avg,
-          pv_power_max            = excluded.pv_power_max,
-          load_power_avg          = excluded.load_power_avg,
+          battery_soc_avg         = COALESCE(excluded.battery_soc_avg,         battery_soc_avg),
+          battery_soc_min         = COALESCE(excluded.battery_soc_min,         battery_soc_min),
+          battery_soc_max         = COALESCE(excluded.battery_soc_max,         battery_soc_max),
+          battery_power_avg       = COALESCE(excluded.battery_power_avg,       battery_power_avg),
+          battery_temperature_avg = COALESCE(excluded.battery_temperature_avg, battery_temperature_avg),
+          grid_power_avg          = COALESCE(excluded.grid_power_avg,          grid_power_avg),
+          grid_power_min          = COALESCE(excluded.grid_power_min,          grid_power_min),
+          grid_power_max          = COALESCE(excluded.grid_power_max,          grid_power_max),
+          pv_power_avg            = COALESCE(excluded.pv_power_avg,            pv_power_avg),
+          pv_power_max            = COALESCE(excluded.pv_power_max,            pv_power_max),
+          load_power_avg          = COALESCE(excluded.load_power_avg,          load_power_avg),
           sample_count            = excluded.sample_count
       `, [
-        sourceMap.battery, sourceMap.battery, sourceMap.battery,  // soc avg/min/max
+        eff, eff,                                                  // battery AC conversion
+        sourceMap.battery, sourceMap.battery, sourceMap.battery,   // soc avg/min/max
         sourceMap.battery, sourceMap.battery,                      // power avg, temp avg
         sourceMap.grid,    sourceMap.grid,    sourceMap.grid,      // grid avg/min/max
         sourceMap.solar,   sourceMap.solar,                        // pv avg/max
-        sourceMap.home,                                            // load avg
+        winFrom, winTo,
       ]);
 
       if (result.affectedRows > 0)
         console.log(`\x1b[37m   • ${PREFIX} - snapshots → minutes`);
+      return result.affectedRows ?? 0;
     } catch (error) {
       console.error(`\x1b[91m   • ${PREFIX} - Minute aggregation failed:`, error.message, '\x1b[37m');
+      return 0;
     }
   }
 
-  // ── Uur-aggregatie ──────────────────────────────────────────────────────────
+  // ── Hour aggregation ────────────────────────────────────────────────────────
+  //
+  // Power flow model (raw AlphaESS sign: battery_power < 0 = charging):
+  //   solar_to_load    = MIN(pv, load)
+  //   battery_to_load  = MIN(MAX(load-pv,0), MAX(battery_power,0))
+  //   grid_to_load     = MAX(load - pv - battery_discharge, 0)
+  //   solar_to_battery = MIN(MAX(pv-load,0), MAX(-battery_power,0))  → stored negative
+  //
+  // These columns were all computing to 0 while load_power_avg was NULL, because
+  // COALESCE(load, 0) collapsed every term. They only become meaningful once the
+  // minute-level load derivation above is populated.
 
-  async aggregateHours() {
+  async aggregateHours({ from = null, to = null } = {}) {
     try {
-      // Rolling 25-hour window to match the minute aggregation approach.
-      //
-      // Power flow model (AlphaESS: battery_power < 0 = charging):
-      //   solar_to_load    = MIN(pv, load)
-      //   battery_to_load  = MIN(MAX(load-pv,0), MAX(battery_power,0))
-      //   grid_to_load     = MAX(load - pv - battery_discharge, 0)
-      //   solar_to_battery = MIN(MAX(pv-load,0), MAX(-battery_power,0))  → stored negative
-      //   solar_to_grid    = MAX(MAX(pv-load,0) - MAX(-battery_power,0), 0) → stored negative
+      const now     = new Date();
+      const winFrom = from ?? this._localSecond(this._hoursAgo(25, now));
+      const winTo   = to   ?? this._localHour(now);
+
       const [result] = await db.pool.query(`
         INSERT INTO energy_hours (
           timestamp,
@@ -198,74 +330,84 @@ class AggregatorService {
           solar_to_load_kwh, battery_to_load_kwh, grid_to_load_kwh, solar_to_grid_kwh
         )
         SELECT
-          strftime('%Y-%m-%d %H:00:00', timestamp)        AS hour_timestamp,
-          AVG(battery_soc_avg),
-          AVG(battery_power_avg),
-          AVG(pv_power_avg),
-          AVG(grid_power_avg),
-          AVG(load_power_avg),
+          hour_timestamp,
+          soc_avg, bat_avg, pv_avg, grid_avg, load_avg,
 
-          -- raw grid import/export
-          ROUND(MAX(COALESCE(AVG(grid_power_avg),    0), 0) / 1000.0, 3),
-          ROUND(MIN(COALESCE(AVG(grid_power_avg),    0), 0) / 1000.0, 3),
+          ROUND(MAX(COALESCE(grid_avg, 0), 0) / 1000.0, 3),
+          ROUND(MIN(COALESCE(grid_avg, 0), 0) / 1000.0, 3),
 
-          -- solar → home
+          ROUND(MIN(COALESCE(pv_avg, 0), COALESCE(load_avg, 0)) / 1000.0, 3),
+
           ROUND(MIN(
-            COALESCE(AVG(pv_power_avg),   0),
-            COALESCE(AVG(load_power_avg), 0)
+            MAX(COALESCE(load_avg, 0) - COALESCE(pv_avg, 0), 0),
+            MAX(COALESCE(bat_avg, 0), 0)
           ) / 1000.0, 3),
 
-          -- battery → home (discharging to cover load beyond solar)
-          ROUND(MIN(
-            MAX(COALESCE(AVG(load_power_avg), 0) - COALESCE(AVG(pv_power_avg), 0), 0),
-            MAX(COALESCE(AVG(battery_power_avg), 0), 0)
-          ) / 1000.0, 3),
-
-          -- grid → home (remaining load after solar + battery)
           ROUND(MAX(
-            COALESCE(AVG(load_power_avg), 0)
-            - COALESCE(AVG(pv_power_avg), 0)
-            - MAX(COALESCE(AVG(battery_power_avg), 0), 0),
+            COALESCE(load_avg, 0)
+            - COALESCE(pv_avg, 0)
+            - MAX(COALESCE(bat_avg, 0), 0),
             0
           ) / 1000.0, 3),
 
-          -- solar → battery (surplus charging battery, stored negative for chart)
           ROUND(-MIN(
-            MAX(COALESCE(AVG(pv_power_avg),   0) - COALESCE(AVG(load_power_avg), 0), 0),
-            MAX(-COALESCE(AVG(battery_power_avg), 0), 0)
+            MAX(COALESCE(pv_avg, 0) - COALESCE(load_avg, 0), 0),
+            MAX(-COALESCE(bat_avg, 0), 0)
           ) / 1000.0, 3)
 
-        FROM energy_minutes
-        WHERE timestamp >= datetime('now', '-25 hours')
-          AND timestamp <  strftime('%Y-%m-%d %H:00:00', datetime('now'))
-        GROUP BY hour_timestamp
+        FROM (
+          SELECT
+            strftime('%Y-%m-%d %H:00:00', timestamp) AS hour_timestamp,
+            AVG(battery_soc_avg)                     AS soc_avg,
+            AVG(battery_power_avg)                   AS bat_avg,
+            AVG(pv_power_avg)                        AS pv_avg,
+            AVG(grid_power_avg)                      AS grid_avg,
+            AVG(load_power_avg)                      AS load_avg
+          FROM energy_minutes
+          WHERE timestamp >= ?
+            AND timestamp <  ?
+          GROUP BY hour_timestamp
+        )
+        WHERE true   -- required: disambiguates upsert ON from a join ON (SQLite upsert parsing)
         ON CONFLICT(timestamp) DO UPDATE SET
-          battery_soc_avg      = excluded.battery_soc_avg,
-          battery_power_avg    = excluded.battery_power_avg,
-          pv_power_avg         = excluded.pv_power_avg,
-          grid_power_avg       = excluded.grid_power_avg,
-          load_power_avg       = excluded.load_power_avg,
+          battery_soc_avg      = COALESCE(excluded.battery_soc_avg,   battery_soc_avg),
+          battery_power_avg    = COALESCE(excluded.battery_power_avg, battery_power_avg),
+          pv_power_avg         = COALESCE(excluded.pv_power_avg,      pv_power_avg),
+          grid_power_avg       = COALESCE(excluded.grid_power_avg,    grid_power_avg),
+          load_power_avg       = COALESCE(excluded.load_power_avg,    load_power_avg),
           grid_import_kwh      = excluded.grid_import_kwh,
           grid_export_kwh      = excluded.grid_export_kwh,
           solar_to_load_kwh    = excluded.solar_to_load_kwh,
           battery_to_load_kwh  = excluded.battery_to_load_kwh,
           grid_to_load_kwh     = excluded.grid_to_load_kwh,
           solar_to_grid_kwh    = excluded.solar_to_grid_kwh
-      `, []);
+      `, [winFrom, winTo]);
 
       if (result.affectedRows > 0)
         console.log(`\x1b[37m   • ${PREFIX} - minutes → hours`);
+      return result.affectedRows ?? 0;
     } catch (error) {
       console.error(`\x1b[91m   • ${PREFIX} - Hour aggregation failed:`, error.message, '\x1b[37m');
+      return 0;
     }
   }
 
-  // ── Dag-aggregatie ──────────────────────────────────────────────────────────
+  // ── Daily aggregation ───────────────────────────────────────────────────────
+  //
+  // load_consumption_kwh: wolffie-core's load_energy_today when present, else
+  // derived from the meter balance at the AC boundary:
+  //
+  //   load = pv + import - export + (discharge * eff) - (charge / eff)
+  //
+  // Without the eff terms this overstates load by the round-trip conversion
+  // losses — measurably so: ~6.7 kWh over the 8 days to 2026-08-30.
 
-  async aggregateDaily(sourceMap) {
+  async aggregateDaily(sourceMap, eff, { from = null, to = null } = {}) {
     try {
-      // Rolling 2-day window: today and yesterday, re-aggregated on every cycle.
-      // Covers midnight rollover and ensures today's running totals stay current.
+      const now     = new Date();
+      const winFrom = from ?? this._localDate(this._daysAgo(1, now));
+      const winTo   = to   ?? this._localDate(now);
+
       const [result] = await db.pool.query(`
         INSERT INTO energy_daily (
           date,
@@ -274,52 +416,75 @@ class AggregatorService {
           battery_charge_kwh, battery_discharge_kwh
         )
         SELECT
-          date(timestamp)                  AS day,
-          MAX(CASE WHEN source = ? THEN solar_energy_today         END),
-          MAX(CASE WHEN source = ? THEN load_energy_today          END),
-          MAX(CASE WHEN source = ? THEN grid_energy_import_today   END),
-          MAX(CASE WHEN source = ? THEN grid_energy_export_today   END),
-          MAX(CASE WHEN source = ? THEN battery_charge_today       END),
-          MAX(CASE WHEN source = ? THEN battery_discharge_today    END)
-        FROM energy_snapshots
-        WHERE date(timestamp) >= date('now', '-1 days')
-        GROUP BY day
+          day,
+          pv, 
+          COALESCE(
+            core_load,
+            CASE
+              -- Same rule as the minute derivation: every term required, or NULL.
+              WHEN pv IS NULL OR imp IS NULL OR exp IS NULL
+                OR chg IS NULL OR dis IS NULL THEN NULL
+              ELSE MAX(pv + imp - exp + dis * ? - chg / ?, 0)
+            END
+          ),
+          imp, exp, chg, dis
+        FROM (
+          SELECT
+            date(timestamp) AS day,
+            MAX(CASE WHEN source = ? THEN solar_energy_today       END) AS pv,
+            MAX(CASE WHEN source = ? THEN grid_energy_import_today END) AS imp,
+            MAX(CASE WHEN source = ? THEN grid_energy_export_today END) AS exp,
+            MAX(CASE WHEN source = ? THEN battery_charge_today     END) AS chg,
+            MAX(CASE WHEN source = ? THEN battery_discharge_today  END) AS dis,
+            MAX(CASE WHEN source = 'wolffie-core' THEN load_energy_today END) AS core_load
+          FROM energy_snapshots
+          WHERE date(timestamp) >= ?
+            AND date(timestamp) <= ?
+          GROUP BY day
+        )
+        WHERE true   -- required: disambiguates upsert ON from a join ON (SQLite upsert parsing)
         ON CONFLICT(date) DO UPDATE SET
-          pv_generation_kwh     = excluded.pv_generation_kwh,
-          load_consumption_kwh  = excluded.load_consumption_kwh,
-          grid_import_kwh       = excluded.grid_import_kwh,
-          grid_export_kwh       = excluded.grid_export_kwh,
-          battery_charge_kwh    = excluded.battery_charge_kwh,
-          battery_discharge_kwh = excluded.battery_discharge_kwh
+          pv_generation_kwh     = COALESCE(excluded.pv_generation_kwh,     pv_generation_kwh),
+          load_consumption_kwh  = COALESCE(excluded.load_consumption_kwh,  load_consumption_kwh),
+          grid_import_kwh       = COALESCE(excluded.grid_import_kwh,       grid_import_kwh),
+          grid_export_kwh       = COALESCE(excluded.grid_export_kwh,       grid_export_kwh),
+          battery_charge_kwh    = COALESCE(excluded.battery_charge_kwh,    battery_charge_kwh),
+          battery_discharge_kwh = COALESCE(excluded.battery_discharge_kwh, battery_discharge_kwh)
       `, [
+        eff, eff,
         sourceMap.solar,
-        sourceMap.home,
         sourceMap.grid,
         sourceMap.grid,
         sourceMap.battery,
         sourceMap.battery,
+        winFrom, winTo,
       ]);
 
       if (result.affectedRows > 0)
         console.log(`\x1b[37m   • ${PREFIX} - snapshots → daily`);
+      return result.affectedRows ?? 0;
     } catch (error) {
       console.error(`\x1b[91m   • ${PREFIX} - Daily aggregation failed:`, error.message, '\x1b[37m');
+      return 0;
     }
   }
 
-  // ── Maand-aggregatie ────────────────────────────────────────────────────────
+  // ── Monthly aggregation ─────────────────────────────────────────────────────
   //
-  // MySQL gebruikte YEAR(), MONTH() en LPAD() — allemaal vervangen door
-  // SQLite strftime() en printf(). De uniekheidscheck gebruikt year||month
-  // in plaats van CONCAT met LPAD.
+  // `rebuildAll` forces a full recompute regardless of the last aggregated month —
+  // needed after a backfill, since load_consumption_kwh changes for every past day.
 
-  async aggregateMonthly() {
+  async aggregateMonthly({ rebuildAll = false } = {}) {
     try {
-      const [lastAgg] = await db.pool.query(
-        `SELECT MAX(year || '-' || printf('%02d', month)) AS last_month
-         FROM energy_monthly`
-      );
-      const lastMonth = lastAgg[0]?.last_month || '1970-01';
+      let lastMonth = '1970-01';
+
+      if (!rebuildAll) {
+        const [lastAgg] = await db.pool.query(
+          `SELECT MAX(year || '-' || printf('%02d', month)) AS last_month
+           FROM energy_monthly`
+        );
+        lastMonth = lastAgg[0]?.last_month || '1970-01';
+      }
 
       const [result] = await db.pool.query(`
         INSERT INTO energy_monthly (
@@ -351,34 +516,23 @@ class AggregatorService {
 
       if (result.affectedRows > 0)
         console.log(`\x1b[37m   • ${PREFIX} - daily → monthly`);
+      return result.affectedRows ?? 0;
     } catch (error) {
       console.error(`\x1b[91m   • ${PREFIX} - Monthly aggregation failed:`, error.message, '\x1b[37m');
+      return 0;
     }
   }
 
-  // ── Device-aggregatie + 7-daagse purge ─────────────────────────────────────
+  // ── Device aggregation + 7-day purge ────────────────────────────────────────
   //
-  // MySQL-versie gebruikte SUBSTRING_INDEX(MAX(CONCAT(timestamp,'|',energy_total)))
-  // om de laatste waarde per apparaat op te halen — een MySQL-specifieke truc
-  // die niet werkt in SQLite.
-  //
-  // SQLite-aanpak: subquery met ORDER BY timestamp DESC LIMIT 1.
-  //
-  // Uitgebreid met avg_power, max_power, avg_voltage en sample_count
-  // zoals afgesproken (device_daily_usage tabel wordt uitgebreid via migratie).
-  // De 7-daagse purge van ruwe metingen wordt na de aggregatie uitgevoerd.
+  // dateStr was built with toISOString() — UTC. Between 00:00 and 02:00 local
+  // that names the day before yesterday, so yesterday never got aggregated on
+  // those cycles. Now local.
 
-  async aggregateDevices() {
+  async aggregateDevices({ date = null } = {}) {
     try {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const dateStr = yesterday.toISOString().split('T')[0];
+      const dateStr = date ?? this._localDate(this._daysAgo(1));
 
-      // 1. Aggregeer gisteren naar device_daily_usage
-      //    usage_kwh = MAX(energy_today) — reset elke dag om middernacht en
-      //    loopt op gedurende de dag, dus MAX is de dagopbrengst.
-      //    Voor apparaten die energy_today niet ondersteunen (null):
-      //    val back op MAX(energy_total) - MIN(energy_total).
       const [insertResult] = await db.pool.query(`
         INSERT INTO device_daily_usage (
           device_id, date, usage_kwh,
@@ -398,7 +552,7 @@ class AggregatorService {
           AVG(voltage)                           AS avg_voltage,
           COUNT(*)                               AS sample_count,
           source,
-          datetime('now')                        AS last_update
+          ?                                      AS last_update
         FROM device_measurements
         WHERE date(timestamp) = ?
         GROUP BY device_id, date(timestamp), source
@@ -409,12 +563,12 @@ class AggregatorService {
           avg_voltage  = excluded.avg_voltage,
           sample_count = excluded.sample_count,
           last_update  = excluded.last_update
-      `, [dateStr]);
+      `, [this._localSecond(), dateStr]);
 
-      // 2. Purge ruwe metingen ouder dan 7 dagen
+      // Purge raw measurements older than 7 days (local boundary)
       const [purgeResult] = await db.pool.query(
-        `DELETE FROM device_measurements
-         WHERE timestamp < datetime('now', '-7 days')`
+        `DELETE FROM device_measurements WHERE timestamp < ?`,
+        [this._localSecond(this._daysAgo(7))]
       );
 
       if (insertResult.affectedRows > 0 || purgeResult.affectedRows > 0)
@@ -428,14 +582,10 @@ class AggregatorService {
   }
 
   // ── Forecast accuracy ───────────────────────────────────────────────────────
-  //
-  // Geen MySQL-specifieke syntax — werkt ongewijzigd met de SQLite shim.
 
   async compareForecastWithActual() {
     const modulePrefix = padName('Solar Forecast');
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const dateStr = yesterday.toISOString().split('T')[0];
+    const dateStr = this._localDate(this._daysAgo(1));   // was toISOString() — UTC
 
     try {
       const [daily] = await db.pool.query(
@@ -460,8 +610,8 @@ class AggregatorService {
         return;
       }
 
-      const expectedKwh   = parseFloat(forecast[0].expected_kwh) || 0;
-      const accuracyPct   = expectedKwh > 0
+      const expectedKwh = parseFloat(forecast[0].expected_kwh) || 0;
+      const accuracyPct = expectedKwh > 0
         ? Math.round((actualKwh / expectedKwh) * 100 * 10) / 10
         : 0;
 
@@ -482,54 +632,60 @@ class AggregatorService {
     }
   }
 
-  // ── Nachtprofiel ────────────────────────────────────────────────────────────
+  // ── Nightly profile ─────────────────────────────────────────────────────────
   //
-  // Wijzigingen t.o.v. MySQL-versie:
-  //   HOUR(timestamp)                      →  CAST(strftime('%H', timestamp) AS INTEGER)
-  //   DATE_SUB(CURDATE(), INTERVAL 14 DAY) →  date('now', '-14 days')
-  //   CURDATE()                            →  date('now')
-  //   JSON_MERGE_PATCH()                   →  lees huidige config → merge in JS → schrijf terug
-  //   ON DUPLICATE KEY UPDATE              →  ON CONFLICT(strategy_id) DO UPDATE SET
+  // This is the strategy-facing consumer of load_power_avg. While load was NULL
+  // the `load_power_avg > 0` filter matched zero rows, so hourlyLoadProfile was
+  // 24 zeros and morningKwhNeeded was 0 — SmartEco planned every night believing
+  // the house needed no morning energy. Fixing the load chain fixes this.
 
   async calculateNightlyProfile() {
     const modulePrefix = padName('Nightly Profile');
     console.log(`\x1b[37m   • ${modulePrefix} - Calculating morning energy profile...`);
 
     try {
-      // 1. Gemiddeld uurlijks verbruiksprofiel over de laatste 14 dagen
+      const today       = this._localDate();
+      const fourteenAgo = this._localDate(this._daysAgo(14));
+
+      // 1. Average hourly load profile over the last 14 days
       const [hourlyRows] = await db.pool.query(`
         SELECT
           CAST(strftime('%H', timestamp) AS INTEGER) AS hour_of_day,
           AVG(load_power_avg)                        AS avg_load_w,
           COUNT(*)                                   AS sample_count
         FROM energy_hours
-        WHERE timestamp >= date('now', '-14 days')
-          AND timestamp <  date('now')
+        WHERE timestamp >= ?
+          AND timestamp <  ?
           AND load_power_avg IS NOT NULL
           AND load_power_avg > 0
         GROUP BY hour_of_day
         ORDER BY hour_of_day
-      `);
+      `, [fourteenAgo, today]);
 
       const hourlyLoadProfile = Array(24).fill(0);
       for (const row of hourlyRows) {
         hourlyLoadProfile[row.hour_of_day] = Math.round(row.avg_load_w);
       }
 
-      // 2. Gemiddeld dagverbruik (14 dagen)
+      if (hourlyRows.length === 0) {
+        console.warn(
+          `\x1b[93m   • ${modulePrefix} - No hourly load data in the last 14 days; ` +
+          `profile will be all zeros and SmartEco will under-plan morning energy.\x1b[37m`
+        );
+      }
+
+      // 2. Average daily consumption (14 days)
       const [dailyRows] = await db.pool.query(`
         SELECT AVG(load_consumption_kwh) AS avg_load_kwh
         FROM energy_daily
-        WHERE date >= date('now', '-14 days')
-          AND date <  date('now')
+        WHERE date >= ?
+          AND date <  ?
           AND load_consumption_kwh > 0
-      `);
+      `, [fourteenAgo, today]);
       const dailyAvgLoadKwh = parseFloat(dailyRows[0]?.avg_load_kwh) || 5.0;
 
-      // 3. Zonneprognose voor morgen
-      const tomorrow    = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      // 3. Tomorrow's solar forecast
+      const tomorrowStr = this._localDate(this._daysAgo(-1));   // was toISOString() — UTC
 
       const [forecastRows] = await db.pool.query(`
         SELECT CAST(strftime('%H', slot_datetime) AS INTEGER) AS hour_of_day,
@@ -550,41 +706,39 @@ class AggregatorService {
         }
       }
 
-      // Fallback naar vandaag als morgen nog geen prognose heeft
       if (forecastRows.length === 0) {
-        const todayStr = new Date().toISOString().split('T')[0];
         const [todayForecast] = await db.pool.query(
           'SELECT expected_kwh FROM solar_forecasts WHERE date = ?',
-          [todayStr]
+          [today]
         );
         solarTotalKwh = parseFloat(todayForecast[0]?.expected_kwh) || 0;
       }
 
-      // 4. Ochtend-kWh (middernacht → solar_start_hour)
+      // 4. Morning kWh (midnight → solar_start_hour)
       let morningKwhNeeded = 0;
       for (let h = 0; h < solarStartHour; h++) {
         morningKwhNeeded += hourlyLoadProfile[h] / 1000;
       }
       morningKwhNeeded = Math.round(morningKwhNeeded * 100) / 100;
 
-      // 5. Prognose-nauwkeurigheidsfactor (laatste 14 dagen)
+      // 5. Forecast accuracy factor (last 14 days)
       const [accuracyRows] = await db.pool.query(`
         SELECT AVG(accuracy_percentage) AS avg_accuracy
         FROM solar_forecasts
-        WHERE date >= date('now', '-14 days')
-          AND date <  date('now')
+        WHERE date >= ?
+          AND date <  ?
           AND actual_kwh  IS NOT NULL
           AND actual_kwh   > 0
           AND expected_kwh > 0
-      `);
-      const rawAccuracy          = parseFloat(accuracyRows[0]?.avg_accuracy);
+      `, [fourteenAgo, today]);
+      const rawAccuracy            = parseFloat(accuracyRows[0]?.avg_accuracy);
       const forecastAccuracyFactor = isNaN(rawAccuracy)
         ? 0.7
         : Math.min(1.0, rawAccuracy / 100);
 
-      // 6. Profiel opbouwen
+      // 6. Build profile
       const profile = {
-        calculatedAt:            new Date().toISOString(),
+        calculatedAt:            this._localSecond(),
         dailyAvgLoadKwh:         Math.round(dailyAvgLoadKwh * 100) / 100,
         morningKwhNeeded,
         solarStartHour,
@@ -593,12 +747,8 @@ class AggregatorService {
         hourlyLoadProfile,
       };
 
-      // 7. Profiel opslaan in strategy_config
-      //
-      // MySQL had JSON_MERGE_PATCH() — niet beschikbaar in SQLite.
-      // Oplossing: lees de huidige config, merge in JavaScript, schrijf terug.
-      // Dit garandeert dat andere sleutels in de config bewaard blijven.
-
+      // 7. Persist into strategy_config (read → merge in JS → write back;
+      //    SQLite has no JSON_MERGE_PATCH, and other keys must survive)
       const [existing] = await db.pool.query(
         'SELECT config FROM strategy_config WHERE strategy_id = ?',
         ['smart-eco']
