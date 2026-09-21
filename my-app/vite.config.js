@@ -7,6 +7,19 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const timestamp = new Date().getTime();
 
+const generateVersion = () => {
+  const now = new Date();
+  const year = now.getFullYear() - 2017; // Year since 2017
+  const month = now.getMonth() + 1;      // Current month (1-12)
+  const day = now.getDate();             // Current day
+
+  // Pad the month/day with leading zero if needed, then join
+  return `${year}.${month}.${day}`;
+};
+
+// Generate the version string once for this build
+const BUILD_VERSION = generateVersion();
+
 // Every environment-specific value below has a working default, so a fresh
 // clone builds and runs without editing this file. Overrides go in
 // .env.local (git-ignored). See "Configuration" in the README.
@@ -62,11 +75,15 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@fortawesome': path.resolve(__dirname, 'node_modules/@fortawesome'),
+        //'@fortawesome': path.resolve(__dirname, 'node_modules/@fortawesome'),
         // vue-i18n ships an ESM build that relies on runtime template
         // compilation; the CJS build avoids that and keeps the bundle smaller.
         'vue-i18n': 'vue-i18n/dist/vue-i18n.cjs.js',
       },
+    },
+    define: {
+      // The value must be JSON-stringified for Vite/Rollup
+      '__APP_VERSION__': JSON.stringify(BUILD_VERSION), 
     },
 
     server: {
@@ -93,6 +110,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             vendor: ['vue', 'vue-router', 'pinia'],
             charts: ['chart.js'],
+            i18n:   ['vue-i18n'],
           }
         }
       }
