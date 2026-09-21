@@ -8,11 +8,8 @@
 #   Stage 3 (runtime)          — Minimale Alpine runtime image
 #
 # Build:
-#   docker build \
-#     --build-arg NPM_FONTAWESOME_TOKEN=<jouw-token> \
-#     -t wolffie:latest .
+#   docker build -t wolffie:latest .
 #
-# FontAwesome Pro token ophalen: https://fontawesome.com/account
 
 # ============================================================================
 # Stage 1 — Frontend build
@@ -20,17 +17,6 @@
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /build
-
-# FontAwesome Pro is een private npm registry — token vereist als build arg
-ARG NPM_FONTAWESOME_TOKEN
-RUN if [ -z "$NPM_FONTAWESOME_TOKEN" ]; then \
-      echo "WARNING: NPM_FONTAWESOME_TOKEN is not set — FontAwesome Pro icons will fail to install"; \
-    fi
-
-# .npmrc aanmaken voor FontAwesome Pro registry authenticatie
-# Wordt ALLEEN gebruikt tijdens npm install — niet gekopieerd naar runtime image
-RUN echo "@fortawesome:registry=https://npm.fontawesome.com/" > .npmrc && \
-    echo "//npm.fontawesome.com/:_authToken=${NPM_FONTAWESOME_TOKEN}" >> .npmrc
 
 # Dependencies installeren (inclusief devDependencies — nodig voor Vite build)
 COPY my-app/package*.json ./
