@@ -1,6 +1,6 @@
 {
   "id": "alphaess-modbus-tcp",
-  "version": "1.1.8",
+  "version": "1.1.7",
   "name": "AlphaESS ModBus TCP",
   "description": "AlphaESS inverter communication via ModBus TCP/IP. Verified against SMILE G3-T10; other AlphaESS household models share the same register map (protocol v1.28) but are unverified.",
   "author": "Wolffie",
@@ -54,16 +54,6 @@
   },
 
   "changelog": [
-    {
-      "version": "1.1.8",
-      "date": "2026-08-28",
-      "author": "Wolffie",
-      "changes": [
-        "Fixed: saving any module setting could silently stop the AlphaESS module. Battery data disappeared from the dashboard (showing an empty battery) and battery control was lost until the server was restarted. Changing the Max SoC value reproduced this every time",
-        "Cause: after saving settings the module tested the connection to the inverter. That test asked for a second connection while the collector was already connected, and the inverter allows only one at a time. The test therefore always failed, and the module concluded the inverter was unreachable and shut itself down",
-        "Saving settings no longer tests the connection. The collector already reconnects on every cycle and recovers from network problems on its own, so a settings change is no longer able to disable the module"
-      ]
-    },
     {
       "version": "1.1.7",
       "date": "2026-08-25",

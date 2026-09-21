@@ -660,4 +660,4 @@ class AlphaModbusAPI {
   }
 }
 
-export default new AlphaModbusAPI();w
+export default new AlphaModbusAPI();

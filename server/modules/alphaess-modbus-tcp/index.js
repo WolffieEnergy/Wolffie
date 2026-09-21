@@ -19,32 +19,12 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 const MODULE_ID = 'alphaess-modbus-tcp';
 const PRIORITY  = 10;
 
-// ── Health / recovery tuning ─────────────────────────────────────────────────
-//
-// FAILURE_THRESHOLD: consecutive failed collection cycles before this module
-// releases its capabilities so a lower-priority provider (alphaess-cloud) can
-// take over. At the configured 20 s collector interval this is ~5 minutes of
-// sustained failure — long enough that a transient network blip or a single
-// missed cycle never triggers failover.
-//
-// WATCHDOG_INTERVAL_MS: how often to check module health and, when we are
-// currently unregistered, probe for recovery.
-const FAILURE_THRESHOLD   = 15;
-const WATCHDOG_INTERVAL_MS = 5 * 60 * 1000;
-
 class AlphaESSModbusTCPModule {
   constructor() {
     this.manifest    = manifest;
     this.initialized = false;
     this.connected   = false;
     this.config      = null;
-
-    // True while this module's capabilities are present in the registry.
-    // Distinguishes "we deliberately released them after sustained failure"
-    // from "we never registered" — the watchdog needs that distinction.
-    this.capabilitiesRegistered = false;
-
-    this._watchdogTimer = null;
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -89,20 +69,14 @@ class AlphaESSModbusTCPModule {
       // Always register capabilities — even when offline at startup.
       // If the inverter is unreachable the handlers throw, and the registry
       // falls back to the next provider (alphaess-cloud at priority 10).
-      // Capabilities are released only by the health watchdog, after
-      // FAILURE_THRESHOLD consecutive failed collection cycles.
+      // reinitialize() unregisters explicitly if the host becomes permanently
+      // unreachable after a settings change.
       this._registerCapabilities();
-
-      this._startWatchdog();
 
     } catch (error) {
       console.error('\x1b[91m     - Failed to initialize module:', error.message);
       throw error;
     }
-  }
-
-  async stop() {
-    this._stopWatchdog();
   }
 
   async collect() {
@@ -124,7 +98,6 @@ class AlphaESSModbusTCPModule {
     return {
       ...collector.getStatus(),
       connected: this.connected,
-      capabilitiesRegistered: this.capabilitiesRegistered,
     };
   }
 
@@ -141,27 +114,6 @@ class AlphaESSModbusTCPModule {
     return null;
   }
 
-  /**
-   * Re-reads settings from DB and re-injects them into api + collector.
-   * Called by the core settings route after any setting change.
-   *
-   * IMPORTANT — this method never unregisters capabilities.
-   *
-   * It previously ran api.checkStatus() and tore the capabilities out of the
-   * registry when that probe returned false. checkStatus() opens a brand-new
-   * raw TCP socket; a single unlucky moment (collector mid-reconnect, or the
-   * inverter's TCP stack briefly refusing a second session) was therefore
-   * enough to permanently disable the module — collect() saw zero owned
-   * capabilities and returned early forever, so the collector never ran and
-   * nothing ever re-registered. Observed 2026-08-28: a routine settings save
-   * from the mobile UI killed battery monitoring and battery:stop for 6.5 hours.
-   *
-   * A settings save is not a connectivity event. The probe below is retained
-   * for its log line only — its result never gates registration.
-   *
-   * Returns a status object so the caller can distinguish a clean
-   * reinitialisation from a degraded one.
-   */
   async reinitialize() {
     console.log(`   - RESTART ${MODULE_ID}: reinitializing with fresh settings`);
 
@@ -171,106 +123,24 @@ class AlphaESSModbusTCPModule {
     api.setConfig(this.config);
     collector.config = this.config;
 
-    // Informational probe only — does NOT gate registration.
-    // May report false while the collector holds an open session; that is
-    // expected and harmless.
+    // Re-check connection with potentially new host/port
     const isAlive = await api.checkStatus(this.config.host, this.config.port);
     this.connected = isAlive;
 
     console.log(`   - ${PREFIX}: connection ${isAlive ? '✓' : '✗'} (${this.config.host}:${this.config.port})`);
 
-    // Always (re)register. Idempotent — see _registerCapabilities().
-    this._registerCapabilities();
-
-    // Re-arm the watchdog against the new config.
-    this._startWatchdog();
-
-    return {
-      moduleId:  MODULE_ID,
-      connected: isAlive,
-      registered: this.capabilitiesRegistered,
-    };
-  }
-
-  // ── Health watchdog ────────────────────────────────────────────────────────
-
-  _startWatchdog() {
-    this._stopWatchdog();
-
-    this._watchdogTimer = setInterval(
-      () => this._checkHealth().catch(e =>
-        console.warn(`   • ${PREFIX}: watchdog error — ${e.message}`)
-      ),
-      WATCHDOG_INTERVAL_MS
-    );
-
-    // Do not keep the Node process alive purely for this timer.
-    if (typeof this._watchdogTimer.unref === 'function') {
-      this._watchdogTimer.unref();
-    }
-  }
-
-  _stopWatchdog() {
-    if (this._watchdogTimer) {
-      clearInterval(this._watchdogTimer);
-      this._watchdogTimer = null;
-    }
-  }
-
-  /**
-   * Decides whether this module should be holding its capabilities.
-   *
-   * Registered   + sustained failure  → release, so alphaess-cloud can take over.
-   * Unregistered + inverter reachable → reclaim.
-   *
-   * The recovery probe only runs while we are unregistered. In that state
-   * collect() is short-circuiting, so the collector holds no socket and the
-   * probe cannot contend with it — which is precisely the contention that
-   * caused the original fault.
-   */
-  async _checkHealth() {
-    if (!this.config || this.config.enabled === false) return;
-
-    if (this.capabilitiesRegistered) {
-      const { consecutiveErrors } = collector.getStatus();
-
-      if (consecutiveErrors >= FAILURE_THRESHOLD) {
-        console.warn(
-          `\x1b[91m   • ${PREFIX}: ${consecutiveErrors} consecutive failures — releasing capabilities for failover\x1b[37m`
-        );
-        this._unregisterCapabilities();
-      }
-      return;
-    }
-
-    // Unregistered — attempt recovery.
-    const isAlive = await api.checkStatus(this.config.host, this.config.port);
-    this.connected = isAlive;
-
+    // Re-register if now reachable; unregister if the new host is unreachable
+    // so a lower-priority provider can take over cleanly.
     if (isAlive) {
-      console.log(`\x1b[32m   • ${PREFIX}: inverter reachable again — reclaiming capabilities\x1b[37m`);
-      collector.consecutiveErrors = 0;
-      collector.lastError         = null;
       this._registerCapabilities();
     } else {
-      console.log(`   • ${PREFIX}: still unreachable (${this.config.host}:${this.config.port}) — retrying in 5 min`);
+      capabilityRegistry.unregister(MODULE_ID);
     }
-  }
-
-  _unregisterCapabilities() {
-    capabilityRegistry.unregister(MODULE_ID);
-    this.capabilitiesRegistered = false;
   }
 
   // ── Capability Registration ────────────────────────────────────────────────
 
   _registerCapabilities() {
-
-    // Idempotent: clear any existing registrations for this module first, so a
-    // repeated call (settings save, watchdog recovery) replaces rather than
-    // duplicates. Safe regardless of how capabilityRegistry.register() handles
-    // a repeat registration of the same key.
-    capabilityRegistry.unregister(MODULE_ID);
 
     // ── Battery reads ──────────────────────────────────────────────────────
 
@@ -417,8 +287,6 @@ class AlphaESSModbusTCPModule {
       PRIORITY,           // 15 — wins over AlphaESS home:read at 5
       MODULE_ID
     );
-
-    this.capabilitiesRegistered = true;
     console.log(`     - Capabilities registered`);
   }
 }
