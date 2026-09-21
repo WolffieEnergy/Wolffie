@@ -179,7 +179,7 @@
         "failover_threshold": "Seuil de basculement",
         "email_enabled": "Notifications par e-mail",
         "email_address": "E-mail du destinataire",
-        "email_address_placeholder": "exemple@domaine.fr",
+        "email_address_placeholder": "exemple{'@'}domaine.fr",
         "snapshots_days": "Instantanés",
         "minutes_days": "Données à la minute",
         "hours_days": "Données horaires"

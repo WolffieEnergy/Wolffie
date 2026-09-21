@@ -1,8 +1,8 @@
 <template>
-  <div class="app-section flex flex-col overflow-hidden font-sans bg-card text-primary">
+  <div class="app-section flex flex-col font-sans text-primary">
 
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
-    <header class="app-header-outer bg-background z-40 shrink-0">
+    <header class="app-header-outer z-40 shrink-0">
       <div class="app-header grid items-center p-2 bg-background w-full max-w-[1400px] mx-auto">
 
       <div class="flex items-center gap-8">
@@ -68,7 +68,7 @@
           @click="toggleUserMenu"
           class="user-menu-btn flex items-center bg-card hover:bg-secondary-100 transition-colors"
         >
-          <div class="user-avatar flex items-center justify-center text-[10px] font-bold uppercase bg-secondary-500 ">
+          <div class="user-avatar flex items-center justify-center text-[10px] font-bold uppercase bg-secondary-300 ">
             {{ authStore.user?.username?.substring(0,2) || 'me' }}
           </div>
           <span class="text-sm font-bold text-secondary-700 hidden sm:block">{{ authStore.user?.username }}</span>
@@ -163,8 +163,8 @@
     </AppDrawer>
 
     <!-- ── Body ────────────────────────────────────────────────────────────── -->
-    <main class="flex-1 overflow-y-auto bg-background inner-canvas">
-      <div class="w-full max-w-[1400px] mx-auto">
+    <main class="flex-1 overflow-y-auto  inner-canvas">
+      <div class="w-full max-w-[1400px] mx-auto bg-background">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="$route.fullPath" />
@@ -358,7 +358,7 @@ onUnmounted(() => {
 
 /* ── Profile drawer ──────────────────────────────────────────────────────── */
 .profile-meta               { display: flex; flex-direction: column; align-items: center; padding: 1.5rem 1rem 1.25rem; text-align: center; }
-.profile-meta__avatar       { width: 3.5rem; height: 3.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.profile-meta__avatar       { width: 3.5rem; height: 3.5rem; background: var(--color-secondary-400); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
 .profile-meta__name         { font-size: 1rem; font-weight: 700; }
 .profile-meta__sub          { margin-top: 0.35rem; }
 
@@ -369,7 +369,7 @@ onUnmounted(() => {
 .profile-field__value       { font-size: 0.85rem; font-weight: 600; }
 
 .role-badge                 { display: inline-block; padding: 0.125rem 0.5rem; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.role-badge--admin          { background: var(--color-primary); color: #fff; }
+.role-badge--admin          { background: var(--color-secondary-300); color: #fff; }
 .role-badge--user           { background: var(--color-secondary-200); color: var(--color-text-secondary); }
 .role-badge--viewer         { background: var(--color-secondary-100); color: var(--color-text-tertiary); }
 .req                        { color: #ef4444; margin-left: 2px; }

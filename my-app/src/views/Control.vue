@@ -9,7 +9,7 @@
             v-for="item in menuItems" 
             :key="item.id"
             @click="activeSection = item.id"
-            class="w-full flex items-center p-4 transition-all duration-200 group text-sm "
+            class="w-full flex items-center p-4 group text-sm "
             :class="activeSection === item.id 
               ? 'bg-card ' 
               : 'hover:bg-secondary-200 text-secondary-700'"

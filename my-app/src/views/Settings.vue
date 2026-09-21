@@ -8,7 +8,7 @@
           
           <button v-for="item in staticMenu" :key="item.id"
             @click="activeModuleId = item.id"
-            class="w-full flex items-center p-2 transition-all duration-200 group text-sm"
+            class="w-full flex items-center p-2  group text-sm"
             :class="activeModuleId === item.id ? 'bg-card' : 'hover:bg-secondary-200 text-secondary-900'">
     <!--       <i :class="[item.icon, 'w-6 text-lg', activeModuleId === item.id ? 'text-white' : 'text-secondary-500 group-hover:text-secondary-900']"></i>-->
             <span class="p-2 font-medium text-secondary-700">{{ item.label }}</span>

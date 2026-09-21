@@ -210,7 +210,7 @@
         "failover_threshold": "Failover-Schwelle",
         "email_enabled": "E-Mail-Benachrichtigungen",
         "email_address": "Empfänger-E-Mail",
-        "email_address_placeholder": "beispiel@domain.de",
+        "email_address_placeholder": "example{'@'}domain.de",
         "snapshots_days": "Snapshots",
         "minutes_days": "Minutendaten",
         "hours_days": "Stundendaten"
@@ -257,7 +257,7 @@
     }
   },
   "setup": {
-    "welcome": "Willkommen bei WattsOn",
+    "welcome": "Willkommen bei Wolffie",
     "subtitle": "Richten Sie Ihr System in wenigen einfachen Schritten ein",
     "selectModel": "Modell auswählen",
     "configureModbus": "ModBus konfigurieren",

@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/auth';
 import apiClient from '../services/api';
 
 import MainLayout  from '../layouts/MainLayout.vue';
-import Dashboard   from '../views/Dashboard.vue';
+import Dashboard   from '../views/DashboardHost.vue';
 import Analytics   from '../views/Analytics.vue';
 import History     from '../views/History.vue';
 import Control     from '../views/Control.vue';

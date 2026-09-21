@@ -3,9 +3,9 @@
     <div class="login-outer w-full w-full max-w-[1400px] mx-auto flex justify-center">
       <div class="login-grid grid lg:grid-cols-5 items-center w-full p-10 ">
         <!-- ── Branding panel ─────────────────────────────────────────────── -->
-        <div class="bg-card rounded-xl shadow-md brand-panel lg:col-span-3 flex flex-col items-center justify-center text-center">
+        <div class="brand-panel lg:col-span-3 flex flex-col items-center justify-center text-center">
           <WolffieLogo
-            class="w-2/5 max-w-[400px] text-primary opacity-20 hover:opacity-100 transition-opacity duration-700"
+            class="w-2/5 max-w-[800px] text-primary opacity-20 hover:opacity-100 transition-opacity duration-700"
           />
           <div class="brand-text">
             <h2 class="text-2xl font-black tracking-tighter uppercase text-primary">Wolffie</h2>
@@ -20,7 +20,7 @@
           </div>
         </div>
         <!-- ── Form card ──────────────────────────────────────────────────── -->
-        <div class="login-card lg:col-span-2  ">
+        <div class="bg-card login-card lg:col-span-2  ">
           <div class="login-logo flex items-center">
             <h2 class="text-2xl font-black  text-primary">login</h2>
           </div>
@@ -167,7 +167,7 @@ onUnmounted(() => {
 
 /* ── Fields ──────────────────────────────────────────────────────────────── */
 .field-wrap             { position: relative;margin-top: 1.5rem;height: 3.25rem;}
-.field-input            { position: absolute;inset: 0;padding: 1.25rem 2.5rem 0.25rem 0.625rem;height: 100%;background: transparent;color: var(--color-secondary-700);border-bottom: 1px solid var(--color-secondary-200);}
+.field-input            { position: absolute;inset: 0;padding: 1.25rem 2.5rem 0.25rem 0.625rem;height: 100%;color: var(--color-secondary-700);}
 .field-input:focus      { font-weight:500; }
 
 /* Kill browser autofill bg injection */
