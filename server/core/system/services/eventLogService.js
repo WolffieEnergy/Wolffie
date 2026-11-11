@@ -25,6 +25,48 @@
 //   // Or resolve all active events from a source:
 //   await eventLog.resolveBySource('manual:api', 'discharge_started');
 //
+// Deduplication
+//   An unresolved event IS ongoing state (see above). Logging the same
+//   source+category+event again while the first is still unresolved therefore
+//   describes the SAME condition, not a new one — so it updates that row's
+//   occurrence count and message instead of inserting a duplicate.
+//
+//   Without this, a collector retrying every 12 minutes wrote 45 identical
+//   unresolved rows over two days, buried two genuine faults among them, and
+//   could never be pruned (prune() spares unresolved rows by design).
+//
+//   The counterpart is resolution: whatever raises a recurring condition must
+//   clear it when it recovers, e.g. on a successful collect:
+//     await eventLog.resolveBySource('collector:alphaess-modbus-tcp', 'collect_paused');
+//
+//   Pass { dedupe: false } for events that genuinely should repeat while an
+//   earlier one is still open.
+//
+// Conditions — the generic pattern for every module
+//   Most module alerting is not "an event happened" but "a condition is true
+//   right now": a collector is down, a socket is drawing power, the battery is
+//   below its floor. Those need opening AND closing, plus debouncing so a value
+//   hovering on the boundary does not flap.
+//
+//   condition() does all of it in one idempotent call. Call it on EVERY tick
+//   with the current truth; it only writes when the state actually changes:
+//
+//     await eventLog.condition({
+//       key:      `device:${d.id}:over_threshold`,   // identifies this condition
+//       active:   watts > threshold,
+//       source:   'module:homewizard',
+//       category: 'device',
+//       event:    'power_threshold_exceeded',
+//       severity: 'info',
+//       message:  `${d.name} drawing ${watts} W`,
+//       metadata: { deviceId: d.id, name: d.name, watts, threshold },
+//     });
+//
+//   Do NOT add an "already flagged" boolean to your module's tables. The
+//   unresolved row IS the flag; a second copy drifts out of sync on restart or
+//   manual resolution. condition() rehydrates its in-memory state from
+//   event_log on first use, so a restart mid-condition does not re-fire.
+//
 // Severity levels (lowest → highest):
 //   debug    — verbose diagnostics, not stored unless log level is debug
 //   info     — normal operation confirmations
@@ -61,6 +103,7 @@ const VALID_CATEGORIES = new Set([
   'device',      // smart device control events
   'solar',       // solar forecast and curtailment events
   'grid',        // grid status changes
+  'battery',     // battery state transitions (full, below floor)
 ]);
 
 // Defaults
@@ -70,12 +113,32 @@ const DEFAULT_LOG_LEVEL         = 'info'; // don't store debug by default
 const MAX_HISTORY_LIMIT         = 500;
 const DEFAULT_HISTORY_LIMIT     = 50;
 
+/**
+ * One malformed metadata row must not take out an entire query — a bare
+ * JSON.parse in a .map() throws for the whole page, not just that row.
+ */
+function safeParse(v) {
+  if (!v) return null;
+  if (typeof v === 'object') return v;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+/** Local components, matching the table's own strftime(...,'localtime'). */
+function nowLocal() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+       + ` ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 class EventLogService {
   constructor() {
     this._initialized = false;
     this._alertThreshold = DEFAULT_ALERT_THRESHOLD;
     this._retentionDays  = DEFAULT_RETENTION_DAYS;
     this._logLevel       = DEFAULT_LOG_LEVEL;
+    // key -> { openId, trueRun, falseRun } for condition() debouncing
+    this._conditions     = new Map();
   }
 
   // ── Initialization ──────────────────────────────────────────────────────────
@@ -185,9 +248,13 @@ class EventLogService {
    * @param {string} severity  — 'debug' | 'info' | 'notice' | 'warning' | 'error' | 'critical'
    * @param {string} message   — human-readable description
    * @param {object} [metadata] — optional structured data (stored as JSON)
-   * @returns {number|null}    — inserted row id, or null if suppressed/failed
+   * @param {object} [options]
+   * @param {boolean} [options.dedupe=true] — fold into an existing unresolved
+   *        event with the same source/category/event rather than inserting a
+   *        duplicate. Set false for events that may legitimately overlap.
+   * @returns {number|null}    — row id (existing one when deduped), or null
    */
-  async log(source, category, event, severity, message, metadata = null) {
+  async log(source, category, event, severity, message, metadata = null, options = {}) {
     if (!this._initialized) await this.initialize();
 
     // Validate severity
@@ -206,7 +273,15 @@ class EventLogService {
       console.warn(`   • ${PREFIX} - unknown category '${category}' (allowed but consider adding to VALID_CATEGORIES)`);
     }
 
+    const { dedupe = true } = options;
+
     try {
+      // Fold into the open occurrence of the same condition, if there is one.
+      if (dedupe) {
+        const existing = await this._findActive(source, category, event);
+        if (existing) return this._touch(existing, severity, message, metadata);
+      }
+
       const metadataJson = metadata ? JSON.stringify(metadata) : null;
 
       const [result] = await db.pool.query(
@@ -225,6 +300,130 @@ class EventLogService {
     } catch (err) {
       console.error(`   • ${PREFIX} — log failed: ${err.message}`);
       return null;
+    }
+  }
+
+  /** The open (unresolved) occurrence of this exact condition, if any. */
+  async _findActive(source, category, event) {
+    const [rows] = await db.pool.query(
+      `SELECT id, metadata, severity
+         FROM event_log
+        WHERE source = ? AND category = ? AND event = ? AND resolved_at IS NULL
+        ORDER BY id DESC
+        LIMIT 1`,
+      [source, category, event]
+    );
+    return rows?.[0] ?? null;
+  }
+
+  /**
+   * Record another occurrence of an already-open condition.
+   *
+   * The original `timestamp` is left alone — it is when the condition STARTED,
+   * which is the useful number. `occurrences` and `lastSeen` carry the rest,
+   * and the message is refreshed so the latest detail (a changed lastError,
+   * say) is what the panel shows.
+   *
+   * Severity only ever escalates: a condition that degrades from warning to
+   * error should not silently drop back on the next sample.
+   */
+  async _touch(existing, severity, message, metadata) {
+    const prev = safeParse(existing.metadata) || {};
+    const merged = {
+      ...prev,
+      ...(metadata || {}),
+      occurrences: (prev.occurrences ?? 1) + 1,
+      firstSeen: prev.firstSeen ?? undefined,
+      lastSeen: nowLocal(),
+    };
+
+    const escalated =
+      (SEVERITY_LEVELS[severity] ?? 0) > (SEVERITY_LEVELS[existing.severity] ?? 0)
+        ? severity
+        : existing.severity;
+
+    try {
+      await db.pool.query(
+        `UPDATE event_log
+            SET message = ?, metadata = ?, severity = ?
+          WHERE id = ?`,
+        [message, JSON.stringify(merged), escalated, existing.id]
+      );
+    } catch (err) {
+      console.error(`   • ${PREFIX} - dedupe update failed: ${err.message}`);
+    }
+
+    // Deliberately NOT logged to console on every repeat: the 45-row incident
+    // produced 45 identical console lines as well as 45 rows.
+    return existing.id;
+  }
+
+  // ── Conditions ──────────────────────────────────────────────────────────────
+
+  /**
+   * Declare whether a condition is currently true. Idempotent and safe to call
+   * on every collector tick — it writes only on a transition.
+   *
+   * @param {object} c
+   * @param {string}  c.key        stable identity, e.g. `device:7:over_threshold`
+   * @param {boolean} c.active     is the condition true right now
+   * @param {string}  c.source
+   * @param {string}  c.category
+   * @param {string}  c.event
+   * @param {string}  [c.severity='info']
+   * @param {string}  c.message
+   * @param {object}  [c.metadata]
+   * @param {number}  [c.confirmFor=1] consecutive true ticks before opening
+   * @param {number}  [c.clearFor=1]   consecutive false ticks before resolving
+   * @returns {'opened'|'closed'|null}
+   */
+  async condition({
+    key, active, source, category, event,
+    severity = 'info', message, metadata = null,
+    confirmFor = 1, clearFor = 1,
+  }) {
+    if (!this._initialized) await this.initialize();
+    if (!key) throw new Error('eventLog.condition: key is required');
+
+    let st = this._conditions.get(key);
+    if (!st) {
+      // Rehydrate from the log, so a restart mid-condition does not re-fire.
+      const open = await this._findActive(source, category, event);
+      st = { openId: open?.id ?? null, trueRun: 0, falseRun: 0 };
+      this._conditions.set(key, st);
+    }
+
+    if (active) {
+      st.falseRun = 0;
+      st.trueRun += 1;
+      if (st.openId || st.trueRun < confirmFor) return null;
+
+      st.openId = await this.log(source, category, event, severity, message, metadata);
+      return 'opened';
+    }
+
+    st.trueRun = 0;
+    st.falseRun += 1;
+    if (!st.openId || st.falseRun < clearFor) return null;
+
+    await this.resolve(st.openId);
+    st.openId = null;
+    return 'closed';
+  }
+
+  /** Is this condition currently open? */
+  isConditionOpen(key) {
+    return Boolean(this._conditions.get(key)?.openId);
+  }
+
+  /**
+   * Drop in-memory condition state — call when a module reloads its devices,
+   * so a removed device does not leave a stale entry behind.
+   */
+  forgetConditions(prefix = null) {
+    if (!prefix) { this._conditions.clear(); return; }
+    for (const k of this._conditions.keys()) {
+      if (k.startsWith(prefix)) this._conditions.delete(k);
     }
   }
 
@@ -334,10 +533,7 @@ class EventLogService {
 
       return rows
         .filter(r => (SEVERITY_LEVELS[r.severity] ?? 0) >= minLevel)
-        .map(r => ({
-          ...r,
-          metadata: r.metadata ? JSON.parse(r.metadata) : null,
-        }));
+        .map(r => ({ ...r, metadata: safeParse(r.metadata) }));
     } catch (err) {
       console.error(`   • ${PREFIX} - getActive failed: ${err.message}`);
       return [];
@@ -415,10 +611,7 @@ class EventLogService {
         [...params, safeLimit, safeOffset]
       );
 
-      const events = rows.map(r => ({
-        ...r,
-        metadata: r.metadata ? JSON.parse(r.metadata) : null,
-      }));
+      const events = rows.map(r => ({ ...r, metadata: safeParse(r.metadata) }));
 
       return { events, total, limit: safeLimit, offset: safeOffset };
     } catch (err) {

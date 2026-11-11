@@ -394,6 +394,27 @@ class AggregatorService {
 
   // ── Daily aggregation ───────────────────────────────────────────────────────
   //
+  // COUNTER RESET (2026-10-06)
+  //   The *_today columns are the inverter's own daily counters, and they reset
+  //   at ITS midnight — midnight UTC — which is 02:00 local in CEST and 01:00 in
+  //   CET. Between local midnight and that reset the rows still carry YESTERDAY's
+  //   totals. MAX(counter) over a local day therefore returns the previous day's
+  //   final value whenever it is the larger of the two: on 2026-10-06 that made
+  //   battery discharge read 6.8 kWh (yesterday's total) instead of 5.1.
+  //
+  //   So: sum the counter's INCREMENTS instead. Each step adds (value − previous),
+  //   or the value itself when it dropped, which is the reset. Energy lands on the
+  //   local day it was actually used, whatever time the counter rolls over, and
+  //   the CEST→CET switch needs no hard-coded offset.
+  //
+  //   Per source first, then MAX across sources — never SUM across sources, which
+  //   would double-count a field two collectors both report (grid from a P1 meter
+  //   and from the inverter, say).
+  //
+  //   One extra day of snapshots is read before the window so the first sample of
+  //   the first day has a predecessor to diff against; `WHERE day >= ?` drops it
+  //   again before the insert.
+  //
   // load_consumption_kwh: wolffie-core's load_energy_today when present, else
   // derived from the meter balance at the AC boundary:
   //
@@ -401,6 +422,12 @@ class AggregatorService {
   //
   // Without the eff terms this overstates load by the round-trip conversion
   // losses — measurably so: ~6.7 kWh over the 8 days to 2026-08-30.
+  // NOTE: wolffie-core's own load_energy_today is NOT eff-corrected, so when
+  // derive_home_load is enabled its value wins and is ~0.7 kWh/day higher.
+  //
+  // `sourceMap` is no longer read here — increments are summed per source and
+  // reduced with MAX, so a domain no longer has to be pinned to one module. The
+  // parameter stays for call-site compatibility with aggregateMinutes.
 
   async aggregateDaily(sourceMap, eff, { from = null, to = null } = {}) {
     try {
@@ -417,11 +444,12 @@ class AggregatorService {
         )
         SELECT
           day,
-          pv, 
+          pv,
           COALESCE(
             core_load,
             CASE
-              -- Same rule as the minute derivation: every term required, or NULL.
+              -- Every term required, or NULL. A partial balance is not a smaller
+              -- error, it is a wrong number.
               WHEN pv IS NULL OR imp IS NULL OR exp IS NULL
                 OR chg IS NULL OR dis IS NULL THEN NULL
               ELSE MAX(pv + imp - exp + dis * ? - chg / ?, 0)
@@ -429,20 +457,66 @@ class AggregatorService {
           ),
           imp, exp, chg, dis
         FROM (
-          SELECT
-            date(timestamp) AS day,
-            MAX(CASE WHEN source = ? THEN solar_energy_today       END) AS pv,
-            MAX(CASE WHEN source = ? THEN grid_energy_import_today END) AS imp,
-            MAX(CASE WHEN source = ? THEN grid_energy_export_today END) AS exp,
-            MAX(CASE WHEN source = ? THEN battery_charge_today     END) AS chg,
-            MAX(CASE WHEN source = ? THEN battery_discharge_today  END) AS dis,
-            MAX(CASE WHEN source = 'wolffie-core' THEN load_energy_today END) AS core_load
-          FROM energy_snapshots
-          WHERE date(timestamp) >= ?
-            AND date(timestamp) <= ?
+          -- 3. one row per day: the owning source's total per field
+          SELECT day,
+                 MAX(pv)  AS pv,  MAX(imp) AS imp, MAX(exp) AS exp,
+                 MAX(chg) AS chg, MAX(dis) AS dis, MAX(core_load) AS core_load
+          FROM (
+            -- 2. per source per day: sum of that counter's increments.
+            --    SUM() returns NULL when the source never reported the field,
+            --    which keeps "unknown" distinct from a genuine zero.
+            SELECT day, source,
+                   SUM(d_pv)   AS pv,  SUM(d_imp) AS imp, SUM(d_exp) AS exp,
+                   SUM(d_chg)  AS chg, SUM(d_dis) AS dis, SUM(d_load) AS core_load
+            FROM (
+              -- 1. per sample: the increment, or the raw value after a reset
+              SELECT date(timestamp) AS day, source,
+                     CASE WHEN pv   IS NULL THEN NULL WHEN pv0   IS NULL THEN 0
+                          WHEN pv   >= pv0   THEN pv   - pv0   ELSE pv   END AS d_pv,
+                     CASE WHEN imp  IS NULL THEN NULL WHEN imp0  IS NULL THEN 0
+                          WHEN imp  >= imp0  THEN imp  - imp0  ELSE imp  END AS d_imp,
+                     CASE WHEN exp  IS NULL THEN NULL WHEN exp0  IS NULL THEN 0
+                          WHEN exp  >= exp0  THEN exp  - exp0  ELSE exp  END AS d_exp,
+                     CASE WHEN chg  IS NULL THEN NULL WHEN chg0  IS NULL THEN 0
+                          WHEN chg  >= chg0  THEN chg  - chg0  ELSE chg  END AS d_chg,
+                     CASE WHEN dis  IS NULL THEN NULL WHEN dis0  IS NULL THEN 0
+                          WHEN dis  >= dis0  THEN dis  - dis0  ELSE dis  END AS d_dis,
+                     CASE WHEN load IS NULL THEN NULL WHEN load0 IS NULL THEN 0
+                          WHEN load >= load0 THEN load - load0 ELSE load END AS d_load
+              FROM (
+                -- 0. each sample with its predecessor from the same source.
+                --    CAST because some collectors store counters as TEXT.
+                SELECT timestamp, source,
+                       -- hardware counters only. wolffie-core writes a load row and
+                       -- omits these, so the schema's DEFAULT 0 would otherwise pass
+                       -- as a reading and derive load from a false zero.
+                       CAST(CASE WHEN source <> 'wolffie-core' THEN solar_energy_today       END AS REAL) AS pv,
+                       CAST(CASE WHEN source <> 'wolffie-core' THEN grid_energy_import_today END AS REAL) AS imp,
+                       CAST(CASE WHEN source <> 'wolffie-core' THEN grid_energy_export_today END AS REAL) AS exp,
+                       CAST(CASE WHEN source <> 'wolffie-core' THEN battery_charge_today     END AS REAL) AS chg,
+                       CAST(CASE WHEN source <> 'wolffie-core' THEN battery_discharge_today  END AS REAL) AS dis,
+                       -- load only from wolffie-core: other collectors leave this
+                       -- at the schema default of 0, which is not a measurement
+                       CAST(CASE WHEN source = 'wolffie-core'
+                                 THEN load_energy_today END AS REAL) AS load,
+                       LAG(CAST(CASE WHEN source <> 'wolffie-core' THEN solar_energy_today       END AS REAL)) OVER w AS pv0,
+                       LAG(CAST(CASE WHEN source <> 'wolffie-core' THEN grid_energy_import_today END AS REAL)) OVER w AS imp0,
+                       LAG(CAST(CASE WHEN source <> 'wolffie-core' THEN grid_energy_export_today END AS REAL)) OVER w AS exp0,
+                       LAG(CAST(CASE WHEN source <> 'wolffie-core' THEN battery_charge_today     END AS REAL)) OVER w AS chg0,
+                       LAG(CAST(CASE WHEN source <> 'wolffie-core' THEN battery_discharge_today  END AS REAL)) OVER w AS dis0,
+                       LAG(CAST(CASE WHEN source = 'wolffie-core'
+                                     THEN load_energy_today END AS REAL)) OVER w AS load0
+                FROM energy_snapshots
+                WHERE date(timestamp) >= date(?, '-1 day')
+                  AND date(timestamp) <= ?
+                WINDOW w AS (PARTITION BY source ORDER BY timestamp)
+              )
+            )
+            GROUP BY day, source
+          )
           GROUP BY day
         )
-        WHERE true   -- required: disambiguates upsert ON from a join ON (SQLite upsert parsing)
+        WHERE day >= ?
         ON CONFLICT(date) DO UPDATE SET
           pv_generation_kwh     = COALESCE(excluded.pv_generation_kwh,     pv_generation_kwh),
           load_consumption_kwh  = COALESCE(excluded.load_consumption_kwh,  load_consumption_kwh),
@@ -452,12 +526,7 @@ class AggregatorService {
           battery_discharge_kwh = COALESCE(excluded.battery_discharge_kwh, battery_discharge_kwh)
       `, [
         eff, eff,
-        sourceMap.solar,
-        sourceMap.grid,
-        sourceMap.grid,
-        sourceMap.battery,
-        sourceMap.battery,
-        winFrom, winTo,
+        winFrom, winTo, winFrom,
       ]);
 
       if (result.affectedRows > 0)

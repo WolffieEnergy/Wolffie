@@ -59,6 +59,11 @@ class CollectorManager {
     //   consecutiveErrors: number,
     //   paused:            boolean,       // true after MAX_CONSECUTIVE_ERRORS
     //   recoveryTimer:     Timeout|null,  // one-shot auto-restart timer
+    //   pauseEventOpen:    boolean,       // an unresolved collect_paused row exists
+    //                                      // in event_log for this module. NOT the same
+    //                                      // as `paused`: the recovery timer clears
+    //                                      // `paused` before its probe, so only this
+    //                                      // tracks whether the ALERT is still open.
     // }
     this.schedules = new Map();
     this.isRunning = false;
@@ -137,6 +142,7 @@ class CollectorManager {
       consecutiveErrors: 0,
       paused:            false,
       recoveryTimer:     null,
+      pauseEventOpen:    false,
     });
 
     console.log(`     - Registered collector: ${manifest.name} (default interval: ${manifest.collector?.interval || FALLBACK_INTERVAL}ms, hang timeout: ${manifest.collector?.timeout || DEFAULT_COLLECT_TIMEOUT_MS}ms)`);
@@ -457,6 +463,7 @@ class CollectorManager {
         entry.consecutiveErrors = 0;
         entry.lastError = null;
         entry.paused = false;
+        await this._clearPauseAlert(entry);
       } else {
         // collect() returned false — treat as a soft failure
         entry.consecutiveErrors++;
@@ -472,6 +479,43 @@ class CollectorManager {
       entry.lastError = error.message;
       console.error(`\x1b[91m -   ❌ ${entry.name}: ${error.message} \x1b[37m`);
       this._checkPause(entry);
+    }
+  }
+
+  /**
+   * Close the open collect_paused alert once a module is collecting again.
+   *
+   * This previously only happened on the auto-recovery path — inside the
+   * recovery timer, and only if that single probe succeeded. In practice a
+   * device usually comes back during normal cycling rather than during that
+   * one probe, so the alert stayed open forever, `prune()` spares unresolved
+   * rows by design, and the dashboard card never went away.
+   *
+   * `pauseEventOpen` rather than `paused`, because the recovery timer clears
+   * `paused` before probing — by the time a probe succeeds, `paused` is
+   * already false and cannot tell us whether an alert is outstanding.
+   */
+  async _clearPauseAlert(entry) {
+    if (!entry.pauseEventOpen) return;
+    entry.pauseEventOpen = false;
+
+    try {
+      // Resolves EVERY unresolved collect_paused row for this source, so the
+      // backlog written before this fix is cleared by the first success too.
+      const resolved = await eventLog.resolveBySource(`collector:${entry.id}`, 'collect_paused');
+
+      await eventLog.log(
+        `collector:${entry.id}`,
+        'collector',
+        'collect_resumed',
+        'info',
+        `${entry.name} recovered`,
+        { resolvedAlerts: resolved }
+      );
+
+      console.log(`\x1b[32m   • ${entry.name}: collecting again — alert cleared\x1b[37m`);
+    } catch (err) {
+      console.warn(`\x1b[93m   • ${entry.name}: failed to clear collect_paused alert — ${err.message}\x1b[37m`);
     }
   }
 
@@ -497,6 +541,8 @@ class CollectorManager {
         `\x1b[93m   • ${entry.name}: paused after ${MAX_CONSECUTIVE_ERRORS} consecutive errors. ` +
         `Auto-restart in ${restartMinutes}m.\x1b[37m`
       );
+
+      entry.pauseEventOpen = true;
 
       eventLog.log(
         `collector:${entry.id}`,
@@ -525,8 +571,10 @@ class CollectorManager {
           .then(() => {
             this._armNext(entry.id);
             if (entry.consecutiveErrors === 0) {
-              // Recovery attempt succeeded — close out the alert.
-              eventLog.resolveBySource(`collector:${entry.id}`, 'collect_paused').catch(() => {});
+              // Recovery probe succeeded. _runCollector has normally already
+              // cleared the alert via _clearPauseAlert; this is a no-op in
+              // that case and a safety net if the ordering ever changes.
+              this._clearPauseAlert(entry).catch(() => {});
             }
           })
           .catch((err) => {
