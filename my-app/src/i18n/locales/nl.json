@@ -318,7 +318,34 @@
     "colType": "Type",
     "colAction": "Actie",
     "colUser": "Uitgevoerd door",
-    "colStatus": "Status"
+    "colStatus": "Status",
+    "messages": {
+      "device":    { "power_threshold_exceeded": "{name} verbruikt {watts} W (drempel {threshold} W)" },
+      "battery":   {
+        "soc_full": "Accu vol",
+        "below_min_soc_grid_charge": "Accu onder {floor}% — laden van net"
+      },
+      "grid":      { "export_started": "Teruglevering gestart" },
+      "strategy":  { "strategy_changed": "Strategie gewijzigd naar {name}" },
+      "dispatch":  {
+        "discharge_started": "Ontladen met {watts} W",
+        "dispatch_stopped":  "Dispatch gestopt"
+      },
+      "collector": {
+        "collect_paused":  "{name} niet bereikbaar — opnieuw proberen",
+        "collect_resumed": "{name} hersteld"
+      },
+      "system":    {
+        "startup_complete": "Wolffie gestart — {modules} modules actief",
+        "shutdown":         "Afsluiten",
+        "uncaught_exception": "Onverwachte fout"
+      }
+    },
+    "categories": {
+      "device": "apparaat", "battery": "accu", "grid": "net",
+      "strategy": "strategie", "dispatch": "dispatch", "collector": "collector",
+      "system": "systeem", "settings": "instellingen", "solar": "zon"
+    }
   },
   "control": {
     "title": "Beheerscentrum",

@@ -40,7 +40,7 @@
         class="modal-backdrop fixed inset-0 z-[9500] flex items-center justify-center"
         @click.self="cancel"
       >
-        <div class="modal bg-secondary-100 border border-secondary-200" role="dialog" aria-modal="true">
+        <div class="modal bg-card border border-secondary-200" role="dialog" aria-modal="true">
 
           <div class="modal__body">
             <slot>
@@ -98,15 +98,15 @@ function cancel() {
 
 <style scoped>
 /* ── Backdrop ────────────────────────────────────────────────────────────── */
-.modal-backdrop { background: rgba(17, 24, 39, 0.25); }
+.modal-backdrop { background: rgba(17, 24, 39, 0.35); }
 
 /* ── Modal panel ─────────────────────────────────────────────────────────── */
 .modal {
   padding: 1.5rem;
   width: 500px;
   max-width: 90vw;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-md, 0px);
+  box-shadow: var(--shadow);
+  border-radius: var(--border-radius  );
 }
 
 /* ── Body ────────────────────────────────────────────────────────────────── */

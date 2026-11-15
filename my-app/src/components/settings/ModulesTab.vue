@@ -83,7 +83,7 @@
         </span>
       </template>
 
-      <!-- ── Errors ────────────────────────────────────────────────────── -->
+      <!-- ── Errors ────────────────────────────────────────────────────── 
       <template #_errors="{ value }">
         <template v-if="value._collector?.consecutiveErrors > 0">
           <span class="error-count" :title="value._collector.lastError ?? ''">
@@ -92,7 +92,7 @@
           </span>
         </template>
         <span v-else class="text-xs text-secondary-300">—</span>
-      </template>
+      </template>-->
 
       <!-- ── Actions ───────────────────────────────────────────────────── -->
       <template #_actions="{ value }">
@@ -120,12 +120,12 @@
           <button class="icon-btn" :title="t('modulesTab.manifest_view')" @click="openManifest(value)">
             <i class="ph-light ph-file-code" />
           </button>
-          <button class="icon-btn" :title="t('modulesTab.update_btn')" @click="openUpdate(value)">
+          <!--<button class="icon-btn" :title="t('modulesTab.update_btn')" @click="openUpdate(value)">
             <i class="ph-light ph-arrow-line-up" />
           </button>
           <button class="icon-btn icon-btn--danger" :title="t('modulesTab.uninstall')" @click="askRemove(value)">
             <i class="ph-light ph-trash" />
-          </button>
+          </button>-->
         </div>
       </template>
     </AppTable>
@@ -492,11 +492,11 @@ const mergedRows = computed(() =>
 
 // ── Columns ────────────────────────────────────────────────────────────────
 const desktopColumns = computed(() => [
-  { field: '_status',   title: '',                            slotMode: true, width: '1rem'  },
+  { field: '_status',   title: '',                            slotMode: true, width: '.5rem'  },
   { field: 'name',      title: t('modulesTab.col_name'),      slotMode: true ,width: '40rem' },
-  { field: '_type',     title: t('modulesTab.col_type'),      slotMode: true, width: '8rem'  },
-  { field: '_lastRun',  title: t('collectors.lastCollected'), slotMode: true, width: '2rem'  },
-  { field: '_errors',   title: t('collectors.errors'),        slotMode: true  },
+ // { field: '_type',     title: t('modulesTab.col_type'),      slotMode: true, width: '8rem'  },
+  { field: '_lastRun',  title: t('collectors.lastCollected'), slotMode: true, width: ''  },
+ // { field: '_errors',   title: t('collectors.errors'),        slotMode: true  },
   { field: '_actions',  title: t('common.actions'),           slotMode: true  },
 ]);
 

@@ -82,10 +82,10 @@
 
       </div>
       <!-- ── Forecast + Plan ahead ──────────────────────────────────────── -->
-      <div class="mt-2 border border-secondary-100 rounded-xl grid grid-cols-4 grid-locked p-6 bg-card mt-6">
+      <div class="mt-2  grid grid-cols-4 grid-locked lg:p-6 p-4 bg-card mt-6">
 
         <!-- Forecast strip: today / tomorrow -->
-        <div class="flex items-center gap-8 mb-6">
+        <div class="flex  gap-6 ">
           <div v-for="(day, idx) in forecastDisplay" :key="day.date || idx"
                class="text-center min-w-[60px]">
             <div class="text-sm font-medium lowercase tracking-widest text-secondary-500 mb-2">
@@ -105,7 +105,7 @@
         </div>
 
         <!-- Plan ahead -->
-        <div class="grid col-span-3 gap-4">
+        <div class="grid col-span-3 strategy-info ">
           <div class="text-sm leading-relaxed">
             <div class="text-sm font-medium lowercase tracking-widest text-secondary-500 mb-2">{{ t('dashboard.activeStrategy') }}</div>
             <div class="font-semibold mb-1">{{ strategyStore.activeStrategy?.name }}</div>
@@ -599,7 +599,7 @@ onUnmounted(() => {
 .date-btn:hover               { background: var(--color-secondary-subtle); }
 .date-btn.disabled            { opacity: .3; cursor: default; pointer-events: none; }
 .date-label                   { padding: 0 14px; height: 32px;display: flex; align-items: center;font-size: 13px; font-weight: 500;color: var(--color-text-primary);white-space: nowrap;}
-
+.strategy-info                { padding-left: 1rem ; border-left: 1px solid var(--border-color); }
 /* ── Flow direction indicator ─────────────────────────────────────── */
 .flow-track                   { position: relative; width: 2rem; height: 5px; background: transparent; border-radius: 999px; overflow: hidden; top: -1rem; }
 .flow-track-placeholder       { width: 2rem; height: 5px; }

@@ -518,7 +518,7 @@ import { useToastStore }    from '@/stores/toast';
 import { useLocale }        from '@/composables/useLocale';
 import apiClient            from '@/services/api';
 import StrategyChart        from '@/components/control/StrategyChart.vue';
-import UniversalField       from '@/components/settings/Universalfield.vue';
+import UniversalField       from '@/components/settings/UniversalField.vue';
 import AppDrawer            from '@/components/common/AppDrawer.vue';
 import AppModal             from '@/components/common/AppModal.vue';
 
@@ -1056,7 +1056,7 @@ onUnmounted(() => {
 .legend-dot                   { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
 /* ── Strategy grid ─────────────────────────────────────────────────────── */
-.strategy-grid                { display: grid;grid-template-columns: repeat(2, 1fr);gap: 1.5rem;}
+.strategy-grid                { display: grid;grid-template-columns: repeat(1, 1fr);gap: 1rem;}
 @media (min-width: 900px)     { .strategy-grid { grid-template-columns: repeat(4, 1fr); } }
 
 .strategy-card                { position: relative;border-radius: var(--border-radius); display: flex; flex-direction: column;align-items: flex-start; gap: 0.375rem; padding: 1rem;cursor: pointer; text-align: left; width: 100%;background: var(--color-background);border: 1px solid var(--border-color);transition: border-color 0.15s, background 0.15s;overflow: hidden;}

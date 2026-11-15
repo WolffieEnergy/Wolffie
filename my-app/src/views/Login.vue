@@ -1,9 +1,9 @@
 <template>
-  <div class="loginscreen flex flex-col items-center justify-center app-section font-sans antialiased bg-secondary">
-    <div class="login-outer w-full w-full max-w-[1400px] mx-auto flex justify-center">
-      <div class="login-grid grid lg:grid-cols-5 items-center w-full p-10 ">
+  <div class="loginscreen flex flex-col items-center lg:justify-center app-section font-sans antialiased bg-secondary">
+    <div class="login-outer w-full w-full max-w-[1400px] mx-auto flex lg:justify-center">
+      <div class="login-grid grid lg:grid-cols-5 items-center w-full lg:p-10 ">
         <!-- ── Branding panel ─────────────────────────────────────────────── -->
-        <div class="brand-panel lg:col-span-3 flex flex-col items-center justify-center text-center">
+        <div class="brand-panel bg-card  lg:col-span-3 flex flex-col items-center justify-center text-center">
           <WolffieLogo
             class="w-2/5 max-w-[800px] text-primary opacity-20 hover:opacity-100 transition-opacity duration-700"
           />
@@ -20,14 +20,11 @@
           </div>
         </div>
         <!-- ── Form card ──────────────────────────────────────────────────── -->
-        <div class="bg-card login-card lg:col-span-2  ">
+        <div class="login-card lg:col-span-2  ">
           <div class="login-logo flex items-center">
             <h2 class="text-2xl font-black  text-primary">login</h2>
           </div>
           <form @submit.prevent="handleLogin" autocomplete="off">
-
-
-
             <!-- Username -->
             <div class="field-wrap group">
               <input
@@ -185,9 +182,9 @@ onUnmounted(() => {
 
 /* ── Submit ──────────────────────────────────────────────────────────────── */
 .login-submit           { margin-top: 2.5rem; }
-.login-btn              { padding: 0.5rem 1rem;background: var(--color-secondary-200);color: var(--color-text-primary);border-radius:var(--radius-sm);}
+.login-btn              { padding: 0.5rem 1rem;background: var(--color-primary);color: var(--color-secondary-100);border-radius:var(--border-radius);}
 .login-btn:hover:not(:disabled) 
-                        { background: var(--color-secondary-200);}
+                        { background: var(--color-accent);}
 
 /* ── Brand panel ─────────────────────────────────────────────────────────── */
 .brand-panel            { padding: 1.5rem; }
@@ -203,4 +200,14 @@ onUnmounted(() => {
 .shout-leave-active     { transition: opacity 0.4s ease, transform 0.4s ease; }
 .shout-enter-from       { opacity: 0; transform: translateY(8px); }
 .shout-leave-to         { opacity: 0; transform: translateY(-8px); }
+
+
+@media (max-width: 900px) {
+  .login-grid           { grid-template-columns: 1fr; gap: 1.5rem; }
+  .brand-panel          { order: 1;         border-radius: calc(var(--border-radius) * 2);box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);  }
+  .login-card           { order: 2; padding: 0.25rem ;  }
+  .shout-wrap           { min-height: 2.5rem; margin-bottom: .5rem; }
+  input, select         { border-color:transparent;border-bottom : 1px solid var(--color-border);background: transparent;border-radius: 0; }
+  input:focus           { font-weight: 500; border-bottom: 1px solid var(--color-primary); background-color: transparent;border-radius: 0; }
+}
 </style>

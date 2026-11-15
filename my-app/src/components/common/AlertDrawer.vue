@@ -285,7 +285,7 @@ function formatDate(iso) {
 
 <style scoped>
 /* ── Bell button ───────────────────────────────────────────────────────── */
-.alert-bell       { position: relative;display: flex; align-items: center; justify-content: center;width: 2rem; height: 2rem;background: none; border: none; cursor: pointer;color: var(--color-text-secondary);border-radius: var(--radius-sm);transition: color 0.12s, background 0.12s;}
+.alert-bell       { position: relative;display: flex; align-items: center; justify-content: center;width: 2rem; height: 2rem;background: none; border: none; cursor: pointer;;border-radius: var(--radius-sm);transition: color 0.12s, background 0.12s;}
 .alert-bell:hover { color: var(--color-text-primary); background: var(--color-secondary-200); }
 .alert-bell__badge{ position: absolute; top: 2px; right: 2px;min-width: 1rem; height: 1rem;background: #ef4444; color: #fff;font-size: 0.6rem; font-weight: 700;border-radius: 999px;display: flex; align-items: center; justify-content: center;padding: 0 3px;line-height: 1;}
 

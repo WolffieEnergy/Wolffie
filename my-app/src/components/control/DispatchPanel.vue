@@ -438,8 +438,8 @@ onUnmounted(() => {
 .dispatch-panel         { display: flex; flex-direction: column; gap: 1rem; }
 
 /* ── Status bar ──────────────────────────────────────────────────────────── */
-.status-bar             { display: flex; align-items: center; gap: 0.75rem;padding: 0.625rem 0.875rem; background: var(--color-background); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
-.status-bar__dot        { width: 14px; height: 14px;border-radius: 50%;background: var(--color-primary);flex-shrink: 0;animation: pulse 3s infinite;}
+.status-bar             { display: flex; align-items: center; gap: 0.75rem;padding: 0.625rem 0.875rem; background: var(--color-background); border: 2px solid var(--chart-battery); border-radius: var(--border-radius); }
+.status-bar__dot        { width: 14px; height: 14px;border-radius: 50%;background: var(--chart-battery);flex-shrink: 0;animation: pulse 3s infinite;}
 .status-bar--warn       { border-color: #f59e0b; background: #fffbeb; }
 .status-bar--warn .status-bar__dot { background: #f59e0b; }
 .status-bar__warn       { color: #b45309; font-weight: 600; }
@@ -455,7 +455,7 @@ onUnmounted(() => {
 .status-bar__text       { flex: 1;font-size: 0.8125rem;color: var(--color-secondary-700);font-weight: 500;}
 
 /* ── Card grid ────────────────────────────────────────────────────────────── */
-.dispatch-grid          { display: grid;grid-template-columns: 1fr 1fr 1fr;gap: 0.75rem;}
+.dispatch-grid          { display: grid;grid-template-columns: 1fr 1fr 1fr;gap: 1.5rem;}
 .dispatch-grid--two     { grid-template-columns: 1fr 1fr; }
 
 @media (max-width: 720px) {

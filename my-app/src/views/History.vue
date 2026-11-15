@@ -19,7 +19,7 @@
           </div>
 
           <!-- Date navigator — only shown for single-day view -->
-          <div v-if="selectedPeriod === 'day'" class="date-nav rounded-md">
+          <div v-if="selectedPeriod === 'day'" class="date-nav ">
             <button class="date-btn" @click="goToPrevDay"><i class="ph-light ph-caret-left"></i></button>
             <span class="date-label">
               <span v-if="isToday" class="today-badge">{{ t('time.today') }}</span>
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Main energy chart -->
-      <div class="chart-wrapper p-6 rounded-xl border border-secondary-100">
+      <div class="chart-wrapper p-6 ">
         <EnergyFlowGraph
           :period="graphPeriod"
           :date="selectedDate"
@@ -48,7 +48,7 @@
         <i class="ph-light ph-devices"></i>
           {{ t('dashboard.smartDevices.title') }}
       </div>
-      <div v-if="selectedPeriod === 'day'" class="device-chart-wrapper p-6 rounded-xl border border-secondary-100 ">
+      <div v-if="selectedPeriod === 'day'" class="device-chart-wrapper p-6  ">
 
         <SmartDeviceFlowGraph
           :date="selectedDate"
@@ -149,26 +149,26 @@ function selectPeriod(period) {
 
 <style scoped>
 .history-page           { padding: 24px; margin: 0 auto; max-width: 2400px; height: calc(100vh - 8rem); overflow-y: auto; }
-.history-header         { margin-bottom: 24px; }
+.history-header         { margin-bottom: 1rem; }
 .controls               { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 
 /* ── Period selector ─────────────────────────────────────────────── */
-.period-selector        { display: flex; gap: 8px; padding: 4px; }
-.period-btn             { padding: 10px 20px; border: none; background: transparent; font-family: 'Rubik', sans-serif; color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; border-radius: var(--radius-sm); }
-.period-btn:hover       { background: var(--color-secondary-subtle); color: var(--color-text-primary); }
-.period-btn.active      { background: var(--color-secondary-500); color: var(--color-bg-secondary); font-weight: 600; }
+.period-selector        { display: flex; gap: 8px;  }
+.period-btn             { padding: 10px 20px; border: none; background: transparent; font-family: 'Rubik', sans-serif; color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; border-radius: var(--border-radius);font-weight: 600; }
+.period-btn:hover       { background: var(--card-bg-color); color: var(--color-text-primary); }
+.period-btn.active      { background: var(--color-primary); color: var(--color-secondary-100); }
 
 /* ── Date navigator (matches dashboard style) ────────────────────── */
-.date-nav               { display: inline-flex; align-items: center; height: 3rem; background: var(--card-bg-color); overflow: hidden; }
+.date-nav               { display: inline-flex; align-items: center; height: 3rem; background: var(--card-bg-color); overflow: hidden; border-radius: var(--border-radius); padding: 0 .5rem; }
 .date-btn               { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; font-size: 18px; color: var(--color-text-secondary); cursor: pointer; transition: background 0.12s; }
-.date-btn:hover         { background: var(--color-secondary-subtle); }
+.date-btn:hover         { background: var(--color-secondary-200);border-radius: var(--border-radius); }
 .date-btn.disabled      { opacity: .3; cursor: default; pointer-events: none; }
-.date-label             { display: flex; align-items: center; gap: 6px; padding: 0 14px; height: 32px; font-size: 13px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+.date-label             { display: flex; align-items: center; gap: 6px; padding: 0 14px; height: 32px; font-size: 13px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap;  }
 .today-badge            { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--color-secondary-500); color: var(--color-bg-primary); padding: 1px 6px; border-radius: var(--radius-sm); }
 
 /* ── Chart wrappers ──────────────────────────────────────────────── */
-.chart-wrapper          { background-color: var(--card-bg-color);padding: 1rem;border: 1px solid var(--color-border); }
-.device-chart-wrapper   { background-color: var(--card-bg-color); border: 1px solid var(--color-border); }
+.chart-wrapper          { background-color: var(--card-bg-color);padding: 1rem;border: 1px solid var(--color-border); border-radius: var(--border-radius);margin-bottom: 1rem; }
+.device-chart-wrapper   { background-color: var(--card-bg-color); border: 1px solid var(--color-border);border-radius: var(--border-radius) }
 .device-chart-header    { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.04em; text-transform: lowercase; margin-top: 1rem; }
 .device-chart-header i  { font-size: 14px; }
 
@@ -178,6 +178,9 @@ function selectPeriod(period) {
   .controls             { flex-direction: column; align-items: stretch; }
   .period-selector      { flex-wrap: wrap; justify-content: center; }
   .period-btn           { padding: 8px 16px; font-size: 13px; }
+  .device-chart-wrapper,
+  .device-chart-header  { display: none; }
+  .date-nav             { justify-content: center; }
 }
 
 @media (max-width: 480px) {

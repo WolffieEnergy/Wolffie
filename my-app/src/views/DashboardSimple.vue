@@ -22,14 +22,14 @@
   <div class="dashboard-simple lg:p-6 p-3 text-primary">
     <div class="ds-shell mx-auto">
 
-      <!-- stale banner — a dashboard of old numbers must not look live -->
+      <!-- stale banner — a dashboard of old numbers must not look live -
       <div
         v-if="isStale"
         class="ds-stale mb-3 px-3.5 py-2 bg-amber-50 text-amber-800 text-xs flex items-center gap-2"
       >
         <i class="ph-light ph-warning-circle text-base" aria-hidden="true"></i>
         {{ t('dashboard.dataStale') }}
-      </div>
+      </div>-->
 
       <div class="ds-layout">
 
@@ -235,7 +235,7 @@ const {
   forecastToday, tomorrowKwh, solarVsForecastPct,
   homeHourly, solarHourly, gridHourly,
   socSeries, socProjection,
-  priceSeries, priceNow, pricePeak, hasPlan, solarForecastSeries,
+  priceSeries, priceNow, pricePeak, hasPlan, solarForecastSeries,events,
   isStale,
 } = useDashboardSimple();
 
@@ -270,8 +270,6 @@ const gridStateLabel = computed(() => {
     : t('dashboard.exporting');
 });
 
-/** Empty until the insights list has a data source. */
-const events = computed(() => []);
 
 /**
  * Four summary tiles. Two depend on /strategy/current; they render an em

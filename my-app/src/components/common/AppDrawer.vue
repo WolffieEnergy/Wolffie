@@ -31,7 +31,7 @@
         @click.self="close"
       >
         <Transition name="drawer-slide" appear>
-          <aside v-if="visible" class="drawer flex flex-col h-full bg-secondary-100 border-l border-secondary-200">
+          <aside v-if="visible" class="drawer flex flex-col h-full bg-card border-l border-secondary-200">
 
             <!-- Header -->
             <div class="drawer__header flex items-center justify-between shrink-0 border-b border-secondary-200">
@@ -87,7 +87,7 @@ function close() {
 /* ── Backdrop ────────────────────────────────────────────────────────────── */
 .drawer-backdrop            { background: rgba(17, 24, 39, 0.2); }
 /* ── Drawer panel ────────────────────────────────────────────────────────── */
-.drawer                     { width: 520px; max-width: 100vw;background-color: var( --color-background); margin:0;height:100%}
+.drawer                     { width: 520px; max-width: 100vw;background-color: var(--color-secondary-100); margin:87px .5rem 0 0;height:calc(100vh - 87px - 0.5rem) }
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .drawer__header             { padding: 1.125rem 1.25rem; }
 .drawer__title              { font-size: 0.9375rem; }

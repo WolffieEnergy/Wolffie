@@ -35,8 +35,8 @@ defineProps({
 </script>
 
 <style scoped>
-.status-tiles           { display: grid;grid-template-columns: repeat(2, minmax(0, 1fr));gap: 1rem;}
-.st-tile                { border-radius: var(--border-radius);min-height: 78px;border: 1px solid var(--border-color);background-color: var(--card-bg-color);}
+.status-tiles           { display: grid;grid-template-columns: repeat(1, minmax(0, 1fr));gap: 1rem;}
+.st-tile                { border-radius: var(--border-radius);min-height: 78px;border: 1px solid var(--border-color);background-color: var(--card-bg-color);box-shadow: var(--shadow);display: flex;flex-direction: column;justify-content: center;}
 
 @media (min-width: 900px) {
   .status-tiles {

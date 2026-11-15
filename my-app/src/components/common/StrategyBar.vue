@@ -17,10 +17,10 @@
         {{ t('dashboard.selfSufficient') }}
       </div>
       <div class="flex items-baseline gap-2 mb-2">
-        <span class="text-2xl font-semibold leading-none tabular-nums">
+        <div class="text-5xl font-semibold leading-none tabular-nums">
           <template v-if="selfSufficiency14d !== null">{{ selfSufficiency14d }}%</template>
           <template v-else><span class="text-secondary-400">—</span></template>
-        </span>
+        </div>
         <span class="text-[11px] text-secondary-500">
           {{ t('dashboard.fourteenDayAverage') }}
           <template v-if="selfSufficiencyToday !== null">
@@ -28,7 +28,7 @@
           </template>
         </span>
       </div>
-      <div class="ss-track">
+      <div class="ss-track hidden">
         <div class="ss-fill" :style="{ width: (selfSufficiency14d || 0) + '%' }"></div>
       </div>
     </div>
@@ -120,7 +120,7 @@ defineEmits(['adjust']);
 </script>
 
 <style scoped>
-.strategy-bar         { display: grid;grid-template-columns: 1fr;gap: 1rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);background-color: var(--card-bg-color);}
+.strategy-bar         { display: grid;grid-template-columns: 1fr;gap: 1rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);background-color: var(--card-bg-color);box-shadow: var(--shadow); }
 .sb-cell + .sb-cell   { border-top: 1px solid var(--border-color);padding-top: 0.75rem;}
 .strategy-button      { border-radius: var(--radius-md);}
 .ss-track             { height: 6px;border-radius: 9999px;background: var(--color-secondary-200);overflow: hidden;}

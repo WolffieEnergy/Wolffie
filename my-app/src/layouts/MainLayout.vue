@@ -8,11 +8,11 @@
       <div class="flex items-center gap-8">
         <div class="flex items-center gap-3">
           <router-link to="/" class="brand-link flex items-center gap-3 no-underline text-inherit">
-            <WolffieLogo class="w-9 text-primary" />
+            <WolffieLogo class="w-9 " />
             <span
               :class="[
                 'brand-wordmark text-3xl font-black tracking-tight uppercase transition-colors relative hidden lg:inline',
-                isActive('/') ? 'brand-wordmark text-primary' : 'text-secondary-500 hover:text-primary'
+                isActive('/') ? 'brand-wordmark text-primary' : ' hover:text-primary'
               ]"
             >Wolffie</span>
           </router-link>
@@ -21,7 +21,7 @@
             <span class="relative flex h-2.5 w-2.5">
               <span
                 v-if="realtimeStore.systemHealth === 'ok'"
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"
               ></span>
               <span
                 :class="['relative inline-flex rounded-full h-2.5 w-2.5', {
@@ -51,7 +51,7 @@
               item.disabled ? 'opacity-50 pointer-events-none' : '',
               isActive(item.to)
                 ? 'nav-icon-btn--active text-primary'
-                : 'text-secondary-800 hover:bg-secondary-300 hover:text-primary '
+                : ' hover:bg-secondary-300 hover:text-primary '
             ]"
           >
             <i :class="[item.icon, 'text-lg']"></i>
@@ -77,7 +77,7 @@
 
         <div
           v-if="userMenuOpen"
-          class="user-dropdown absolute z-50 overflow-hidden shadow-xl bg-card border border-secondary-200"
+          class="user-dropdown absolute z-50 overflow-hidden shadow-xl bg-secondary-100 border border-secondary-200"
         >
           <div class="dropdown-inner">
             <button
@@ -349,8 +349,8 @@ onUnmounted(() => {
 
 /* ── User menu ───────────────────────────────────────────────────────────── */
 .user-menu-btn              { gap: 0.5rem; padding: 0.5rem 0.5rem; border-radius:var(--radius-lg)}
-.user-avatar                { width: 1.5rem; height: 1.5rem; border-radius:var(--radius-lg)}
-.user-dropdown              { top: 3rem; right: 0; width: 11rem; border-radius: var(--radius-lg); }
+.user-avatar                { width: 1.5rem; height: 1.5rem; border-radius:var(--border-radius);}
+.user-dropdown              { top: 3rem; right: 0; width: 11rem; border-radius: var(--border-radius); }
 .dropdown-inner             { padding: 0.375rem; }
 .dropdown-item              { padding: 0.375rem 0.625rem; gap: 0.625rem; }
 

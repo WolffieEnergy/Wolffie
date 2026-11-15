@@ -52,52 +52,16 @@ function restartSystem() {
 </script>
 
 <style scoped>
-.theme-section {
-  padding: 1.25rem 0 1rem;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 1.5rem;
-}
-
-.theme-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: lowercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.75rem;
-}
-
+.theme-section          { padding: 1.25rem 0 1rem;border-bottom: 1px solid var(--color-border);margin-bottom: 1.5rem;}
+.theme-label            { font-size: 0.75rem;font-weight: 500;text-transform: lowercase;letter-spacing: 0.05em;color: var(--color-text-secondary);margin-bottom: 0.75rem;}
 .preset-row             { display: flex;gap: 0.75rem;flex-wrap: wrap;}
-.preset-card            { display: flex;align-items: center;gap: 0.5rem;padding: 0.5rem 0.875rem 0.5rem 0.5rem;border: 1px solid var(--color-border);background:var(--color-background);cursor: pointer;transition: border-color 0.15s, box-shadow 0.15s;font-size: 0.8125rem;color: var(--color-text-primary);border-radius: var(--radius-md);}
-.preset-card:hover      { border-color: var(--color-border-dark);}
-.preset-card--active    { border-color: var(--color-primary);box-shadow: inset 0 0 0 1px var(--color-primary);}
+.preset-card            { display: flex;border-radius: var(--radius-lg);align-items: center;gap: 0.5rem;padding: 0.5rem 0.875rem 0.5rem 0.5rem;border: 2px solid var(--color-border);cursor: pointer;transition: border-color 0.15s, box-shadow 0.15s;font-size: 0.8125rem;color: var(--color-text-primary);}
+.preset-card:hover      { background: var(--color-secondary-200);}
+.preset-card--active    { border: 2px solid var(--color-primary);}
 .preset-swatch          { display: flex;width: 28px;height: 20px;overflow: hidden;flex-shrink: 0;}
-
-.swatch-primary,
-.swatch-secondary {
-  flex: 1;
-  height: 100%;
-}
-
-.preset-name {
-  font-weight: 500;
-}
-
-.btn-restart {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8125rem;
-  color: #dc2626;
-  background: transparent;
-  border: 1px solid #fecaca;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.btn-restart:hover {
-  background: #fef2f2;
-  border-color: #fca5a5;
-}
+.swatch-primary         { flex: 1;height: 100%;background: var(--color-background);}
+.swatch-secondary       { flex: 1;height: 100%;background: var(--color-secondary-500);}
+.preset-name            { font-weight: 500;}
+.btn-restart            { display: inline-flex;  align-items: center;  gap: 0.4rem;  padding: 0.375rem 0.75rem;font-size: 0.8125rem;color: var(--color-red-600);  background: transparent;  border: 1px solid var(--color-red-200);  cursor: pointer;  transition: background 0.15s, border-color 0.15s;}
+.btn-restart:hover      { background: var(--color-red-100);border-color: var(--color-red-300);}
 </style>

@@ -17,8 +17,9 @@
     "myProfile": "My Profile"
   },
   "header": {
-    "connected": "Connected",
-    "disconnected": "Disconnected",
+    "connected": "all modules connected",
+    "disconnected": "Disconnected modules",
+    "degraded": "Degraded module(s)",
     "refreshData": "Refresh Data",
     "userMenu": "User Menu",
     "logout": "Logout"
@@ -87,7 +88,8 @@
       "charge_from_grid": "Charge from grid",
       "discharge_to_grid": "Discharge to grid",
       "hold": "Hold",
-      "set_charge_limit": "Set charge limit"
+      "set_charge_limit": "Set charge limit",
+      "solar_use": "Use solar"
     },
     "solarForecast": "Solar forecast",
     "now": "now",
@@ -114,7 +116,8 @@
     "viewHistory": "View history",
     "insightsEmpty": "No events recorded yet.",
     "noSeries": "No data",
-    "dataStale": "Data may be out of date — the collector has not reported recently."
+    "dataStale": "Data may be out of date — the collector has not reported recently.",
+    "since": "since {time}"
   },
   "cards": {
     "homeSolar": "Home & Solar",
@@ -362,7 +365,36 @@
     "colType": "Type",
     "colAction": "Action",
     "colUser": "Performed By",
-    "colStatus": "Status"
+    "colStatus": "Status",
+    "messages": {
+      "device":    { "power_threshold_exceeded": "{name} drawing {watts} W (threshold {threshold} W)" },
+      "battery":   {
+        "soc_full": "Battery full",
+        "below_min_soc_grid_charge": "Battery below {floor}% — charging from grid"
+      },
+      "grid":      { "export_started": "Grid export started" },
+      "strategy":  { "strategy_changed": "Strategy switched to {name}" }
+    },
+    "categories": {
+      "device": "device", "battery": "battery", "grid": "grid",
+      "strategy": "strategy", "dispatch": "dispatch", "collector": "collector",
+      "system": "system", "settings": "settings", "solar": "solar"
+    },
+    "…": "… existing keys …",
+    "ongoing": "ongoing",
+    "resolved": "resolved",
+    "colSeverity": "Severity",
+    "colMessage": "Message",
+    "colSource": "Source",
+    "short": {
+      "device":    { "power_threshold_exceeded": "{name} on" },
+      "battery":   { "soc_full": "Battery full",
+                    "below_min_soc_grid_charge": "Below floor" },
+      "grid":      { "export_started": "Exporting" },
+      "dispatch":  { "discharge_started": "Discharging",
+                    "dispatch_stopped": "Dispatch stopped" },
+      "collector": { "collect_paused": "{sourceName} down" }
+    }
   },
   "control": {
     "title": "Control Center",

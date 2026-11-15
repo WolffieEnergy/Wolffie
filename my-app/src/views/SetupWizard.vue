@@ -375,7 +375,7 @@ import { useToastStore } from '@/stores/toast';
 import { useConfigStore } from '@/stores/config';
 import { markSetupComplete } from '@/router';
 import apiClient from '@/services/api';
-import UniversalField from '@/components/settings/Universalfield.vue';
+import UniversalField from '@/components/settings/UniversalField.vue';
 
 const router      = useRouter();
 const toast       = useToastStore();

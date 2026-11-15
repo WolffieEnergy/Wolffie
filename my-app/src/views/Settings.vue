@@ -1,17 +1,17 @@
 <template>
-  <div class="p-6 float-canvas">
+  <div class="lg:p-0 p-2 float-canvas">
     <div class="flex flex-col md:flex-row hero-card ">
       <aside class="w-full flex-shrink-0 flex flex-col md:w-64  ">
 
         <nav class="flex-1 overflow-y-auto p-6 lg:space-y-4 settingsmenu">
-          <p class="hidden lg:content p-4 text-xs font-normal text-secondary-500 lowercase border-b border-secondary-200 tracking-wider mb-2">{{ t('settings.system') }}</p>
+          <p class="hidden lg:content p-4 text-xs font-normal color-primary lowercase border-b border-secondary-200 tracking-wider mb-2">{{ t('settings.system') }}</p>
           
           <button v-for="item in staticMenu" :key="item.id"
             @click="activeModuleId = item.id"
-            class="w-full flex items-center p-2  group text-sm"
-            :class="activeModuleId === item.id ? 'bg-card' : 'hover:bg-secondary-200 text-secondary-900'">
+            class="w-full flex items-center p-2 color-primary group text-sm"
+            :class="activeModuleId === item.id ? 'active' : 'hover:bg-secondary-200 '">
     <!--       <i :class="[item.icon, 'w-6 text-lg', activeModuleId === item.id ? 'text-white' : 'text-secondary-500 group-hover:text-secondary-900']"></i>-->
-            <span class="p-2 font-medium text-secondary-700">{{ item.label }}</span>
+            <span class="p-2 font-medium color-primary">{{ item.label }}</span>
           </button>
         </nav>
       </aside>

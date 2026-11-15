@@ -1,11 +1,10 @@
 /* src/assets/styles/main.css
 @import "./rubik.css";*/
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600;700&display=swap');
 @import "./ph-light.css";
 @import "./ph-fill.css";
 @import "tailwindcss";
 @import "./themes.css";
-
+@import "https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100..900;1,100..900&display=swap";
 
 /* ── Tailwind v4 @theme ───────────────────────────────────────────────────────
  * @theme resolves at BUILD time and does two things:
@@ -27,8 +26,6 @@
  * .bg-card utility.
  * ─────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --font-family-sans: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
   --color-primary:   #0a0a0a;
   --color-accent:    #5492be;
   --color-on-accent: #ffffff;
@@ -78,7 +75,8 @@
   --gap-3xl: 4rem;
 
   /* Typography */
-  --font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs:   0.75rem;
   --font-size-sm:   0.875rem;
   --font-size-base: 1rem;
@@ -118,7 +116,7 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
                         { padding: var(--gap-xl); color: var(--color-text-primary); }
 .p-card-title           { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); font-size: var(--font-size-lg); margin-bottom: var(--gap-md); }
 .p-card-subtitle        { color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-normal); }
-.bg-card                { background-color: var(--card-bg-color); border: 1px solid var(--color-border ); border-radius: var(--border-radius); box-shadow: none; }
+.bg-card                { background-color: var(--card-bg-color); border: 1px solid var(--color-border ); border-radius: var(--border-radius); box-shadow: var(--shadow); }
 
 /* Stats cards */
 .stats-overview         { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -141,8 +139,6 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
 .btn--primary           { background: var(--color-secondary-300); border-color: var(--color-border); color: var(--color-primary); }
 .btn--primary:hover:not(:disabled) 
                         { background: var(--color-secondary-400); border-color: var(--color-secondary-400); }                      
-.btn--primary:hover:not(:disabled) 
-                        { background: var(--color-accent);border-color: var(--color-secondary-300);}
 /* ── Power / data display ─────────────────────────────────────────────────── */
 .power-value            { font-size: var(--font-size-5xl); font-weight: var(--font-weight-black); line-height: 1; margin: var(--gap-md) 0; color: var(--color-text-primary); letter-spacing: -0.03em; }
 .power-unit             { font-size: var(--font-size-xl); font-weight: var(--font-weight-medium); margin-left: var(--gap-sm); color: var(--color-text-secondary); }
@@ -163,8 +159,8 @@ body                    { font-family: var(--font-family);font-weight: var(--fon
 .grid-cols-3            { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4            { grid-template-columns: repeat(4, 1fr); }
 
-input , select          { width: 100%;padding: 0.4375rem 0.75rem;border:1px solid var(--color-border);border-radius: var(--radius-sm);font-size: 0.8125rem;color: var(--color-text-primary);background: var(--color-secondary-50);outline: none;box-sizing: border-box;transition: border-color 0.15s;}
-input:focus             { border-color: var(--color-secondary-300);background: var(--color-secondary-100); }
+input , select          { width: 100%;padding: 0.4375rem 0.75rem;border:1px solid var(--color-border);border-radius: var(--border-radius);font-size: 0.8125rem;color: var(--color-text-primary);background: var(--color-secondary-50);outline: none;box-sizing: border-box;transition: border-color 0.15s;}
+input:focus             { border-color: var(--color-border);background: var(--color-secondary-200); }
 input::placeholder      { color: var(--color-text-tertiary); }
 
 @media (max-width: 1024px) {
@@ -193,7 +189,7 @@ input::placeholder      { color: var(--color-text-tertiary); }
 
 /* ── Layout helpers ───────────────────────────────────────────────────────── */
 .info-section           { height: calc(100vh - 4rem); }
-.hero-card              { height: calc(100vh - 9rem);}
+.hero-card              { height: calc(100vh - 12rem);}
 .right-section          { min-width: 320px; }
 .canvas                 { min-height: calc(100vh - 4rem); overflow-y: auto; }
 .inner-canvas           { min-height: calc(100vh - 7rem); }
@@ -225,5 +221,13 @@ img[src*="stat"], img[src*="icon"], .status-icon, .summary-item-icon {
 ::-webkit-scrollbar-corner        { background: var(--color-secondary-100); }
 ::-webkit-scrollbar-buttons       { display:none; }
 
+.color-solar                      { color: var(--chart-solar); }
+.color-battery                    { color: var(--chart-battery); } 
+.color-grid                       { color: var(--chart-grid); }
+.color-yield                      { color: var(--chart-yield); }
+.bg-color-solar                   { background-color: var(--chart-solar); }
+.bg-color-battery                 { background-color: var(--chart-battery); } 
+.bg-color-grid                    { background-color: var(--chart-grid); }
+.bg-color-yield                   { background-color: var(--chart-yield); }
 
 * { scrollbar-width: thin; scrollbar-color: var(--color-secondary-300) var(--color-secondary-100); }

@@ -39,7 +39,7 @@ html[data-theme='default'] {
   color-scheme: light;
 
   --color-primary:        #0a0a0a;
-  --color-on-accent:      #ffffff;
+  --color-accent:        #95a2bb;
   --color-toggle-knob:    #ffffff;
 
   --color-secondary-50:   #f9fafb;
@@ -69,40 +69,42 @@ html[data-theme='default'] {
   --radius-xl:  .75rem;
   --radius-2xl: 0px;
   --border-radius: .75rem;
-  --border-color:  transparent ;
-  --max-width:  1180px;
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --border-color:  transparent; ;
+  --max-width:  1380px;
+  --shadow: none;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
    OLIVE — light, warm brown-grey
    ══════════════════════════════════════════════════════════════════ */
-html[data-theme='olive'] {
+html[data-theme='wolffieLight'] {
   color-scheme: light;
 
-  --color-primary:        #3D4127;
+  --color-primary:        #7A9E7E;
   --color-on-accent:      #ffffff;
   --color-toggle-knob:    #ffffff;
 
 /* Light Mode Secondary Olive Palette (Base #636B2F) */
-  --color-secondary-50:  #f6f7f0; /* Zeer lichte olijf-tint / achtergronden */
-  --color-secondary-100: #eaece0; /* Subtiele achtergronden / kaarten */
-  --color-secondary-200: #d6d9c2; /* Randen / diviselijnen */
-  --color-secondary-300: #b8bd97; /* Inactieve / uitgeschakelde UI-elementen */
-  --color-secondary-400: #889251; /* Lichte accenten / minder prominente buttons */
-  --color-secondary-500: #636B2F; /* Basis olijfkleur */
-  --color-secondary-600: #505725; /* Hover states / interactieve elementen */
-  --color-secondary-700: #3e441b; /* WCAG AA contrast voor tekst op lichte achtergronden */
-  --color-secondary-800: #2c3012; /* Donkere tekst / iconen */
-  --color-secondary-900: #1a1d0a; /* Diepste tekst / hoogste contrast */
+/* Secondary Light Slate Palette (Base #6F7B84) */
+  --color-secondary-50:   #f5f7f8; /* Diepste lichte achtergrond */
+  --color-secondary-100:  #e8ecee; /* Kaarten / Panelen */
+  --color-secondary-200:  #d2d9dd; /* Randen / Dividers */
+  --color-secondary-300:  #b1bdc4; /* Inactieve UI-elementen */
+  --color-secondary-400:  #8f9ca5; /* Gedempte tekst */
+  --color-secondary-500:  #6f7b84; /* Basis secondary kleur */
+  --color-secondary-600:  #57626a; /* Hover states */
+  --color-secondary-700:  #424b52; /* Donkere voorgrond / Iconen */
+  --color-secondary-800:  #2c3237; /* Donkere tekst */
+  --color-secondary-900:  #1c2023; /* Primaire hoge-contrast tekst */
+  --color-secondary-950:  #111416; /* Maximale contrast accenten */
 
-  --color-background:     #f1f0e8;
-  --card-bg-color:        #ffffff;
+  --color-background:     #F5F0E8;
+  --card-bg-color:        #FDFAF4;
 
-  --chart-solar:   #c7bf4d; /* Ochre gold */ /* Theme base olive */
-  --chart-grid:    #e9543a; /* warm sienna / burnt orange */
-  --chart-battery: #636B2F; /* Terracotta / Clay */
-  --chart-yield:   #4A6B82; /* Muted steel blue */
+  --chart-solar:   #d8cc1e; /* Ochre gold */ /* Theme base olive */
+  --chart-grid:    #962b18; /* warm sienna / burnt orange */
+  --chart-battery: #1e8b36; /* Terracotta / Clay */
+  --chart-yield:   #5e4bce; /* Muted steel blue */
   --chart-axis:    #857A6D; /* Readable neutral grey-brown */
 
   --radius-sm:  4px;
@@ -111,8 +113,9 @@ html[data-theme='olive'] {
   --radius-xl:  16px;
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
-  --border-color:  var(--color-secondary-50) ;
+  --border-color:  var(--color-secondary-100) ;
   --max-width:  1200px;
+  --shadow: none;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -144,11 +147,11 @@ html[data-theme='ocean'] {
   --card-bg-color:        #ffffff;
 
    /* Energy Chart Palette */
-  --chart-solar:   #0D9488; /* Deep teal */
-  --chart-grid:    #2563EB; /* Deep ocean blue */
-  --chart-battery: #E11D48; /* Deep coral red */
-  --chart-yield:   #D97706; /* Warm amber */
-  --chart-axis:    #7BA3C2; /* Muted sea-grey */
+  --chart-solar:   #dfc908; /* Warm amber */
+  --chart-grid:    #bd2626;; /* High-contrast orange */
+  --chart-battery: #137e3a; /* Crisp emerald green */
+  --chart-yield:   #0284C7; /* Deep azure blue, home usage */
+  --chart-axis:    var(--color-secondary-400);   /* Muted steel blue, chart axes */
 
   --radius-sm:  4px;
   --radius-md:  8px;
@@ -157,6 +160,7 @@ html[data-theme='ocean'] {
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
   --border-color:  transparent ;
+  --max-width:  1600px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -170,33 +174,40 @@ html[data-theme='ocean'] {
 html[data-theme='solar'] {
   color-scheme: dark;
 
-  --color-primary:        #EAA221;
-  --color-accent:         #B38000;
+  --color-primary:        #d4af37;
+  --color-accent:         #e6ca84;
   --color-on-accent:      #ffffff;
   --color-toggle-knob:    #ffffff;
 
---color-secondary-50: #1c1607;
-  --color-secondary-100: #2b220b;
-  --color-secondary-200: #453712;
-  --color-secondary-300: #6b551c;
-  --color-secondary-400: #a07f2b;
-  --color-secondary-500: #eabe53; /* Base */
-  --color-secondary-600: #eed078;
-  --color-secondary-700: #f3de9b;
-  --color-secondary-800: #f7eabd;
-  --color-secondary-900: #faf4de;
-  --color-secondary-950: #fdfbf5;
+  --color-secondary-50:  #1c180d; /* Diepste achtergrond */
+  --color-secondary-100: #2c2615; /* Kaarten / Panelen */
+  --color-secondary-200: #443c22; /* Verhoogde vlakken / Randen */
+  --color-secondary-300: #695d35; /* Dividers / Inactief */
+  --color-secondary-400: #9e8d53; /* Gedempte tekst */
+  --color-secondary-500: #e6ca84; /* Basis kleur */
+  --color-secondary-600: #ecd69d; /* Hover states */
+  --color-secondary-700: #f3e3b7; /* Voorgrond / Iconen */
+  --color-secondary-800: #f8f0d2; /* Heldere tekst */
+  --color-secondary-900: #fcf7e9; /* Hoogste contrast tekst */
+  --color-secondary-950: #fefcf5; /* Highlight */
 
-  --color-background:     #0f172a;
-  --card-bg-color:        #2B2E42;
+  --color-background:     #18191a;
+  --card-bg-color:        #2b2c30;
 
+  --chart-solar:   #f1e42d; /* Ochre gold */ /* Theme base olive */
+  --chart-grid:    #e9543a; /* warm sienna / burnt orange */
+  --chart-battery: #65e74b; /* Terracotta / Clay */
+  --chart-yield:   #529cd1; /* Muted steel blue */
+  --chart-axis:    #857A6D; /* Readable neutral grey-brown */
+  
   --radius-sm:  8px;
   --radius-md:  16px;
   --radius-lg:  24px;
   --radius-xl:  32px;
   --radius-2xl: 48px;
-  --border-radius: 1rem;
-  --border-color:  var(--color-secondary-100) ;
+  --border-radius: .5rem;
+  --border-color:  transparent ;
+
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -205,30 +216,32 @@ html[data-theme='solar'] {
 html[data-theme='carbon'] {
   color-scheme: dark;
 
-  --color-primary:        #e8ede8;   /* ink is LIGHT in dark themes */
+  --color-primary:        #c42b13;   /* ink is LIGHT in dark themes */
   --color-accent:         #7a9782;
   --color-on-accent:      #10140f;   /* dark text sits on the light ink */
-  --color-toggle-knob:    #e8ede8;
+  --color-toggle-knob:    #EF442A;
 
-  --color-secondary-50:   #1b1f1b;
-  --color-secondary-100:  #232823;
-  --color-secondary-200:  #2e352e;
-  --color-secondary-300:  #3d463d;
-  --color-secondary-400:  #7d8c7f;
-  --color-secondary-500:  #95a597;
-  --color-secondary-600:  #aebcaf;
-  --color-secondary-700:  #c6d1c7;
-  --color-secondary-800:  #dbe3db;
-  --color-secondary-900:  #eef2ee;
+/* Secondary Dark Palette (Base #626468) */
+  --color-secondary-50:   #121314; /* Diepste achtergrond */
+  --color-secondary-100:  #1c1d1f; /* Kaarten / Panelen */
+  --color-secondary-200:  #2b2c2f; /* Randen / Verhoogde vlakken */
+  --color-secondary-300:  #404245; /* Dividers / Inactieve elementen */
+  --color-secondary-400:  #515357; /* Gedempte tekst */
+  --color-secondary-500:  #626468; /* Basis secondary kleur */
+  --color-secondary-600:  #888a8e; /* Hover states */
+  --color-secondary-700:  #b0b2b6; /* Voorgrond / Iconen */
+  --color-secondary-800:  #d3d5d8; /* Heldere tekst */
+  --color-secondary-900:  #ebecee; /* Primaire hoge-contrast tekst */
+  --color-secondary-950:  #f7f7f8; /* Highlights */
 
-  --color-background:     #161816;
-  --card-bg-color:        #22271f;
+  --color-background:     #14151a;
+  --card-bg-color:        #27282c;
 
    /* Energy Chart Palette */
   --chart-solar:    #FACC15; /* Soft sunshine yellow */
-  --chart-grid:     #F97316; /* Warm burnt orange */
-  --chart-battery:  #86EFAC; /* Soft mint / spring green */
-  --chart-yield:    #60A5FA; /* Cool forest blue */
+  --chart-grid:     #8a0b11; /* Warm burnt orange */
+  --chart-battery:  #0e853c; /* Soft mint / spring green */
+  --chart-yield:    #549cf5; /* Cool forest blue */
   --chart-axis:     #7D8C7F; /* Soft moss grey */
 
   --radius-sm:  4px;
@@ -237,7 +250,9 @@ html[data-theme='carbon'] {
   --radius-xl:  16px;
   --radius-2xl: 24px;
   --border-radius: 0.5rem;
-  --border-color:  var(--color-secondary-300) ;
+  --border-color:  var(--color-secondary-200) ;
+  --max-width:  1600px;
+
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -288,38 +303,46 @@ html[data-theme='midnight'] {
 html[data-theme='wolffie'] {
   color-scheme: dark;
 
-  --color-primary:        #E9E9ED  ;
-  --color-accent:         #9184d9;
-  --color-on-accent:      #08222c;
-  --color-toggle-knob:    #ebeeeb;
+  /* Primaire tekst & Accenten */
+  --color-primary:        #7A9E7E;
+  --color-accent:         #7B61FF; /* Wolffie paars/indigo accent */
+  --color-on-accent:      #FFFFFF;
+  --color-toggle-knob:    #EBEEEB;
 
-   --color-secondary-50:  #1d1a2c; /* Diepste achtergrond / donkerste tint */
-  --color-secondary-100: #27233a; /* Subtiele oppervlakken / kaarten */
-  --color-secondary-200: #3a3454; /* Randen / opgediepte elementen */
-  --color-secondary-300: #524b75; /* Inactieve of secundaire UI-elementen */
-  --color-secondary-400: #8c82be; /* Voldoet aan WCAG AA contrast op hele donkere ondergronden */
-  --color-secondary-500: #C8C4E8; /* Basis secundaire kleur */
-  --color-secondary-600: #d5d1ed; /* Lichte hover states */
-  --color-secondary-700: #e0dcf2; /* Hoge helderheid voor voorgrond */
-  --color-secondary-800: #ebe8f7; /* Zeer lichte tekst/iconen */
-  --color-secondary-900: #f5f4fb; /* Helderste accent/tekst */
+  /* Secondary Dark Palette (Paars / Indigo verloop) */
+--color-secondary-50:   #131618; /* Diepste achtergrond */
+  --color-secondary-100:  #1c2023; /* Kaarten / Panelen */
+  --color-secondary-200:  #2b3136; /* Randen / Verhoogde vlakken */
+  --color-secondary-300:  #424b52; /* Dividers / Inactieve elementen */
+  --color-secondary-400:  #5b666f; /* Gedempte tekst */
+  --color-secondary-500:  #6f7b84; /* Basis secondary kleur */
+  --color-secondary-600:  #919da6; /* Hover states */
+  --color-secondary-700:  #b7c2c9; /* Voorgrond / Iconen */
+  --color-secondary-800:  #d7e0e5; /* Heldere tekst */
+  --color-secondary-900:  #edf2f5; /* Primaire hoge-contrast tekst */
+  --color-secondary-950:  #f8fafb; /* Highlights */
 
-  --color-background:     #1E2030;
-  --card-bg-color:        #2B2E42;
+  /* Surface / Layout */
+  --color-background:     #1B2E3C; /* Hoofdachtergrond dashboard */
+  --card-bg-color:        #273946; /* Card container achtergrond */
 
-  --chart-solar:   #FBBF24; /* Warm amber */
-  --chart-grid:    #aa4253; /* Theme primary lilac */
-  --chart-battery: #72eb78; /* Vibrant rose/coral */
-  --chart-yield:   #38BDF8; /* Bright cyan/sky blue */
-  --chart-axis:    #be82aa; /* Lilac-tinted muted text */
+  /* Chart.js Kleuren (overeenkomstig met visualisaties) */
+  --chart-solar:          #FBBF24; /* Warm goud/geel */
+  --chart-grid:           #742323; /* Grid import/export blauw */
+  --chart-battery:        #508f3d; /* Batterij koraal/oranje */
+  --chart-yield:          #4A6B82; /* Yield / Home verbruik */
+  --chart-axis:           #8E88A8; /* Milde as- en labeltekst */
 
-  --radius-sm:  6px;
-  --radius-md:  12px;
-  --radius-lg:  18px;
-  --radius-xl:  24px;
-  --radius-2xl: 36px;
-  --border-radius: 0.75rem;
-  --border-color:  var(--color-secondary-300) ;
+  /* Styling & Layout */
+  --radius-sm:            6px;
+  --radius-md:            12px;
+  --radius-lg:            18px;
+  --radius-xl:            24px;
+  --radius-2xl:           36px;
+  --border-radius:        0.75rem;
+  --border-color:         var(--color-secondary-200);
+  --max-width:            1900px;
+  --shadow:               0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* ══════════════════════════════════════════════════════════════════════

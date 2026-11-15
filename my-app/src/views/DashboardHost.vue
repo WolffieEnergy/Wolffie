@@ -141,7 +141,7 @@ watch(() => route.query.view, resolve);
 
 <style scoped>
 .dashboard-host           { position: relative;}
-.dh-toolbar               { max-width: var(--max-width);margin: 0 auto;padding: 0.75rem 1.5rem 0;display: flex;justify-content: flex-end;}
+.dh-toolbar               { max-width: var(--max-width);margin: 0 auto;padding: 0 1.5rem 0;display: flex;justify-content: flex-end;}
 .dh-toggle                { display: inline-flex;gap: 4px;padding: 4px;border-radius: 50%;background: var(--color-background);}
 .dh-toggle-btn            { display: inline-flex;align-items: center;gap: 0.375rem;padding: 0.25rem 0.625rem;font-size: 12px;color: var(--color-secondary-400);line-height: 1.4;border-radius: var(--radius-sm);background: transparent;cursor: pointer;}
 .dh-toggle-btn.is-active  { background: var(--card-bg-color);font-weight: 600;border-radius: var(--radius-xl);border:1px solid var(--border-color);color: var(--color-primary);}

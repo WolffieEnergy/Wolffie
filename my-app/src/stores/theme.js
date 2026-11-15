@@ -16,8 +16,8 @@ import { ref } from 'vue';
 // The real tokens are in themes.css. Keep the keys here in sync with the
 // `html[data-theme='...']` blocks there.
 export const THEME_PRESETS = {
-  default:  { label: 'Default',       dark: false, swatch: ['#0a0a0a', '#9ea1a7'] },
-  olive:    { label: 'Olive',         dark: false, swatch: ['#3d3028', '#948d83'] },
+  default:  { label: 'Default',       dark: false, swatch: [' #eef3f8', '#9ea1a7'] },
+  wolffieLight:    { label: 'Wolffie Light',         dark: false, swatch: ['#f1f0e8', '#948d83'] },
   ocean:    { label: 'Ocean',         dark: false, swatch: ['#183e5f', '#5597d1'] },
   carbon:   { label: 'Carbon Forest', dark: false, swatch: ['#22271f', '#7a9782'] },
   solar:    { label: 'Solar Flare',   dark: false, swatch: ['#0f172a', '#f59e0b'] },

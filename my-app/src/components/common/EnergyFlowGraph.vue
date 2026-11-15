@@ -35,7 +35,7 @@
       </div>
       <canvas ref="chartCanvas"></canvas>
       <!-- Custom HTML tooltip -->
-      <div ref="tooltipEl" style="display:none;position:absolute;pointer-events:none;background:#ffffff;border:1px solid #e4e7ec;border-radius:10px;padding:10px 14px;box-shadow:0 4px 16px rgba(0,0,0,.08);min-width:170px;z-index:100;font-family:system-ui,sans-serif;"></div>
+      <div ref="tooltipEl" style="display:none;position:absolute;pointer-events:none;background:#ffffff;border:1px solid #e4e7ec;border-radius:var(--border-radius);padding:10px 14px;box-shadow:0 4px 16px rgba(0,0,0,.08);min-width:170px;z-index:100;font-family:system-ui,sans-serif;"></div>
     </div>
   </div>
 </template>
@@ -465,7 +465,7 @@ const renderChart = () => {
           grid: {
             color: (context) => {
               // Make zero line more prominent, hide other grid lines
-              return context.tick.value === 0 ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0)';
+              return context.tick.value === 0 ? 'rgba(0, 0, 0, 0.53)' : 'rgba(0, 0, 0, 0)';
             },
             lineWidth: (context) => {
               return context.tick.value === 0 ? 2 : 0;
@@ -514,7 +514,7 @@ const renderChart = () => {
               if (label && /^\d{2}:\d{2}$/.test(label)) {
                 const [hh, mm] = label.split(':');
                 return (mm === '00' && parseInt(hh, 10) % 2 === 0)
-                  ? 'rgba(0, 0, 0, 0.07)' : 'transparent';
+                  ? 'rgba(0, 0, 0, 0.1)' : 'transparent';
               }
               // Multi-day: only draw at start of each day (when label changes)
               const prevLabel = context.index > 0 ? labels[context.index - 1] : null;
@@ -566,9 +566,9 @@ onUnmounted(() => {
 .retry-btn:active               { transform: translateY(0);}
 
 @media (max-width: 768px) {
-  .stats-overview       {grid-template-columns: repeat(2, 1fr);}
+  .stats-overview       {grid-template-columns: repeat(2, 1fr);font-size:80%}
   .energy-flow-graph    {padding: 12px;}
-  .stat-card            {padding: 16px;}
-  .stat-card .value     {font-size: 18px;}
+  .stat-card            {padding: 5px;}
+  .stat-card .value     {font-size: 14px;}
 }
 </style>

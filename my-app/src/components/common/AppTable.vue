@@ -9,9 +9,20 @@
                               { field, title, width?, sortable?, searchable?, slotMode? }
     loading      (Boolean)  – skeleton loader
     search       (String)   – bind with v-model:search for external search control
-    pageSize     (Number)   – rows per page (default 10)
+    pageSize     (Number)   – rows per page (default 8)
     emptyText    (String)   – override "no data" message
     showSearch   (Boolean)  – show built-in search box (default true)
+    pagination   (Boolean)  – pager + page-size selector (default true). Set
+                              false for compact fixed-length embeds.
+    showToolbar  (Boolean)  – render the toolbar row at all (default true)
+
+  Events:
+    row-click    – forwarded from the datatable, payload is the row object
+    pagination   (Boolean)  – show pager + page-size selector (default true).
+                              Set false for compact, fixed-length embeds such
+                              as a dashboard panel, where a pager under eight
+                              rows is chrome for nothing.
+    showToolbar  (Boolean)  – render the toolbar row at all (default true)
 
   Slots:
     toolbar-left   – left side of toolbar (counts, badges)
@@ -35,7 +46,7 @@
   <div class="app-table">
 
     <!-- Toolbar -->
-    <div class="app-table__toolbar">
+    <div v-if="showToolbar" class="app-table__toolbar">
       <div class="app-table__toolbar-left">
         <slot name="toolbar-left" />
       </div>
@@ -63,13 +74,15 @@
       :loading="loading"
       :search="internalSearch"
       :sortable="true"
-      :pagination="true"
+      :pagination="pagination"
       :page-size="pageSize"
       :page-size-options="[8, 10, 25, 50]"
       :show-numbers-count="5"
       :no-data-content="emptyText || t('common.noItems')"
       skin="bh-table-hover"
       class="app-table__datatable"
+      :class="{ 'app-table__datatable--no-pager': !pagination }"
+      @rowClick="emit('row-click', $event)"
     >
       <!-- Forward named slots through to the datatable cell renderers -->
       <template v-for="col in slotColumns" :key="col.field" #[col.field]="data">
@@ -96,9 +109,16 @@ const props = defineProps({
   pageSize:   { type: Number,  default: 8 },
   emptyText:  { type: String,  default: '' },
   showSearch: { type: Boolean, default: true },
+  pagination:  { type: Boolean, default: true },
+  showToolbar: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['update:search']);
+/*
+  row-click is forwarded from the underlying datatable. Without this, a parent
+  binding @row-click silently does nothing — which is why the Events drawer
+  never opened.
+*/
+const emit = defineEmits(['update:search', 'row-click']);
 
 // Internal search string — synced with optional external v-model:search
 const internalSearch = ref(props.search);
@@ -187,6 +207,9 @@ const slotColumns = computed(() =>
   background: #2a2a2b !important;
   font-weight: 500 !important;
 }
+
+/* Compact embeds: no pager row, and no border where it would have been. */
+.app-table__datatable--no-pager .bh-pagination-wrap { display: none !important; }
 
 /* ── Pagination ───────────────────────────────────────────────────────────── */
 .app-table__datatable .bh-pagination-wrap {

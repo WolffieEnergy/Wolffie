@@ -446,10 +446,10 @@ const deviceHaloData = computed(() => {
 .flow-diagram         { display: flex; justify-content: center; align-items: flex-start; padding: 0.75rem 0.5rem 0;  }
 .flow-svg             { overflow: visible; width: 100%; max-width: 100%; }
 
-.hub-circle           { fill: var(--color-secondary-300); filter: drop-shadow(0 2px 8px rgba(0,0,0,.20)); }
-.hub-circle--ups      { fill: var(--color-secondary-400); }
+.hub-circle           { fill: var(--color-primary); filter: drop-shadow(0 2px 8px rgba(0,0,0,.20)); }
+.hub-circle--ups      { fill: var(--color-primary); }
 .hub-ups-ring         { fill: none; stroke: #ef4444; stroke-width: 2; animation: ups-pulse 1.2s ease-in-out infinite; }
-.hub-text             { fill: var(--color-primary); text-anchor: middle; font-family: 'Rubik', sans-serif; }
+.hub-text             { fill: var(--color-secondary-100); text-anchor: middle;font-weight: 900; text-transform: uppercase; }
 .hub-title            { font-size: 7px; font-weight: 700; letter-spacing: 0.1em; }
 .hub-sub              { font-size: 6px; font-weight: 400; opacity: 0.6; }
 .hub-soc-arc          { transition: stroke-dasharray .6s ease; }
@@ -461,11 +461,11 @@ const deviceHaloData = computed(() => {
 
 .node-icon-wrap       { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
-.node-label           { font-family: 'Rubik', sans-serif; font-size: 8px; font-weight: 600; text-transform: lowercase; }
+.node-label           {  font-size: 8px; font-weight: 600; text-transform: lowercase; }
 .node-label--active   { fill: var(--color-primary,#111827); }
 .node-label--inactive { fill: var(--color-secondary-400); font-size: 7px; font-weight: 500; text-transform: lowercase; }
 .node-label--ups      { fill: #ef4444; font-weight: 700; }
-.node-value           { font-family: 'Rubik', sans-serif; font-size: 7px; font-weight: 500; fill: var(--color-secondary,#6b7280); }
+.node-value           {  font-size: 7px; font-weight: 500; fill: var(--color-secondary,#6b7280); }
 
 .flow-line-base       { fill: none; stroke-width: 1; stroke-linecap: round; }
 .flow-line--inactive  { stroke: var(--color-secondary-300,#e5e7eb); stroke-dasharray: 3 6; }
@@ -477,8 +477,8 @@ const deviceHaloData = computed(() => {
 .flow-dot--export     { fill: var(--color-green-600); filter: drop-shadow(0 0 3px rgba(249,115,22,.5)); }
 .flow-dot--import     { fill: var(--color-red-700); filter: drop-shadow(0 0 3px rgba(249,115,22,.5)); }
 
-.badge-text           { font-family: 'Rubik', sans-serif; font-size: 8px; font-weight: 700; fill: var(--color-primary); }
-.chevron-hint         { font-family: 'Rubik', sans-serif; font-size: 8px; fill: var(--color-secondary-400); }
+.badge-text           {  font-size: 8px; font-weight: 700; fill: var(--color-primary); }
+.chevron-hint         {  font-size: 8px; fill: var(--color-secondary-400); }
 
 @keyframes ups-pulse      { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.5; } }
 @keyframes ups-node-pulse { 0%, 100% { stroke-opacity: 0.5; } 50% { stroke-opacity: 1; } }

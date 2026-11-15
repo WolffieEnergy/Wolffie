@@ -22,7 +22,7 @@
       <i :class="icon" class="text-base text-secondary-500" aria-hidden="true"></i>
     </div>
 
-    <div class="text-2xl font-semibold leading-tight tabular-nums">
+    <div class="text-5xl font-semibold leading-tight tabular-nums">
       <template v-if="value !== null">
         {{ value }}<span class="text-xs font-medium text-secondary-500"> {{ unit }}</span>
       </template>
@@ -70,6 +70,6 @@ defineProps({
   the two disagree (Tailwind rounded-2xl is 16px, --radius-2xl is 24px), so
   mapping by name would silently change the shape.
 */
-.metric-badge         { border-radius: var(--border-radius);border: 1px solid var(--border-color);background-color: var(--card-bg-color);}
+.metric-badge         { border-radius: var(--border-radius);border: 1px solid var(--border-color);background-color: var(--card-bg-color);box-shadow: var(--shadow); }
 .badge-context        { border-top: 0px solid var(--border-color);}
 </style>

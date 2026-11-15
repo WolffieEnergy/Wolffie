@@ -5,7 +5,7 @@
     <div v-if="isInitializing" class="loading-screen">
       <div class="loading-content">
         <div class="loading-logo"><WolffieLogo /></div>
-        <p> wolffie</p>
+        <p class="text-2xl font-black tracking-tighter uppercase text-primary"> wolffie</p>
       </div>
     </div>
     <!-- Main app content -->
@@ -83,7 +83,7 @@ onMounted(async () => {
   var(--color-secondary-50, #f8fafc) 0%,
   var(--color-secondary-100, #8c9ee2) 100%);display: flex;align-items: center;justify-content: center;z-index: 9999;}
 .loading-content        { text-align: center;color: var(--color-primary); }
-.loading-content p      { margin-top: 1rem;font-size: 5rem;font-weight: 500;transition: opacity 5s ease-in-out; }
+.loading-content p      { margin-top: 1rem;font-size: 5rem;font-weight: 900;transition: opacity 5s ease-in-out; }
 .loading-logo           { width: 300px;height: auto;color: var(--color-primary, #b5b2c2);animation: logo-fade 2000ms ease-out both;}
 
 @keyframes logo-fade {

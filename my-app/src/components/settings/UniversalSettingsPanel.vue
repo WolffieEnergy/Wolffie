@@ -140,7 +140,7 @@ function resolveField(field) {
 }
 
 // Imports
-import UniversalField from './Universalfield.vue';
+import UniversalField from './UniversalField.vue';
 import UniversalTable from './UniversalTable.vue';
 import UniversalInfoPanel from './UniversalInfoPanel.vue';
 import UniversalCardGrid from './UniversalCardGrid.vue';

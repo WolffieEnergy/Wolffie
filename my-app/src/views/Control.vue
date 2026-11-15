@@ -1,17 +1,17 @@
 <template>
-  <div class="lg:p-6 p-2 float-canvas">
-    <div class="flex flex-col md:flex-row w-full overflow-hidden text-secondary-900 bg-secondary-100 lg:p-6 p-2 rounded-lg  inner-canvas">
+  <div class="lg:p-0 p-2 float-canvas">
+    <div class="flex flex-col md:flex-row w-full  text-secondary-900 rounded-lg  inner-canvas">
       
-      <aside class="w-full  bg-secondary-100 flex-shrink-0 p-4 ps-0 flex flex-col">
+      <aside class="w-full flex-shrink-0 flex flex-col md:w-64">
 
-        <nav class="flex-1 max-w-xs overflow-y-auto  space-y-4 controlmenu">
+        <nav class="flex-1 max-w-xs overflow-y-auto p-6 lg:space-y-4 controlmenu">
           <button 
             v-for="item in menuItems" 
             :key="item.id"
             @click="activeSection = item.id"
             class="w-full flex items-center p-4 group text-sm "
             :class="activeSection === item.id 
-              ? 'bg-card ' 
+              ? 'active ' 
               : 'hover:bg-secondary-200 text-secondary-700'"
           >
             <span class="ms-3 font-medium">{{ item.label }}</span>
@@ -19,20 +19,21 @@
         </nav>
       </aside>
 
-      <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-card rounded-lg inner-canvas-2">
-        
-        <header class="flex-shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-6 px-6">
-          <div>
-            <h2 class="text-xl font-bold text-secondary-900">{{ activeLabel }}</h2>
-            <p class="text-sm text-secondary-500 mt-1">{{ activeDescription }}</p>
-          </div>
-        </header>
+      <main class="flex-1 lg:p-6">
+        <div class="mx-auto md:p-6 bg-card overflow-y-auto h-full">  
+          <header class="flex-shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-6 px-6">
+            <div>
+              <h2 class="text-xl font-bold text-secondary-900">{{ activeLabel }}</h2>
+              <p class="text-sm text-secondary-500 mt-1">{{ activeDescription }}</p>
+            </div>
+          </header>
 
-        <div class="flex-1 overflow-y-auto p-6 mr-1">
-          <div class="mx-auto">
-            <transition name="fade" mode="out-in">
-              <component :is="activeComponent" />
-            </transition>
+          <div class="flex-1 overflow-y-auto p-6 mr-1">
+            <div class="mx-auto">
+              <transition name="fade" mode="out-in">
+                <component :is="activeComponent" />
+              </transition>
+            </div>
           </div>
         </div>
       </main>

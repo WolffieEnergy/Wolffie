@@ -79,5 +79,10 @@
 .cell-primary           { font-size: 0.8125rem; font-weight: 600; color: var(--color-text-primary); }
 .cell-secondary         { font-size: 0.725rem;  color: var(--color-text-tertiary); margin-top: 0.1rem; }
 
-aside nav button        { border-radius: var(--radius-lg); }
+aside nav button        { border-radius: var(--border-radius);border: 1px solid transparent; }
+aside nav button.active,
+aside nav button.active:hover 
+                        { border: 1px solid transparent; background: var(--color-primary);color: var(--color-secondary-100); }
+aside nav button:hover  { border: 1px solid transparent; background: var(--card-bg-color); }
+
 aside                   { width: 13rem; }

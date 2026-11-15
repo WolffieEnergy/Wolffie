@@ -6,7 +6,8 @@
  * Sources
  *   - useRealtimeStore            → today totals, realtime, averages, forecast, health
  *   - GET /history/today?granularity=15 → elapsed intraday series
- *   - GET /strategy/current             → active strategy + dayPlan slots
+ *   - GET /strategies/active            → active strategy + dayPlan slots
+ *   - GET /events?scope=dashboard       → system insights rows
  *
  * Deliberate omissions
  *   - history `stats` is NEVER read. It currently disagrees with both
@@ -49,6 +50,9 @@ export function useDashboardSimple() {
   const seriesError = ref(null);
   const loading     = ref(true);
 
+  /** Raw event_log rows for the insights panel. */
+  const events      = ref([]);
+
   let timer = null;
 
   // ── Fetch ────────────────────────────────────────────────────────────
@@ -86,9 +90,30 @@ export function useDashboardSimple() {
     }
   }
 
+  /**
+   * Insights rows. The ALLOWLIST LIVES SERVER-SIDE — `scope=dashboard` is all
+   * the frontend says. That way a new user-facing event type needs no frontend
+   * change, and a new diagnostic type can never leak onto the home screen.
+   *
+   * The response shape is read defensively: /api/events predates this and may
+   * return { events }, { data } or a bare array.
+   */
+  async function loadEvents() {
+    try {
+      const res = await apiClient.get('/events?scope=dashboard&limit=8');
+      const body = res.data;
+      events.value = Array.isArray(body) ? body
+                   : Array.isArray(body?.events) ? body.events
+                   : Array.isArray(body?.data) ? body.data
+                   : [];
+    } catch {
+      events.value = [];
+    }
+  }
+
   async function refresh() {
     loading.value = true;
-    await Promise.all([loadSeries(), loadStrategy()]);
+    await Promise.all([loadSeries(), loadStrategy(), loadEvents()]);
     loading.value = false;
   }
 
@@ -344,6 +369,7 @@ export function useDashboardSimple() {
     socSeries, socProjection,
     priceSeries, priceNow, pricePeak, hasPlan, solarForecastSeries,
     batteryPowerW, gridPowerW, solarPowerW, loadPowerW,
+    events,
     isStale, lastUpdate,
   };
 }
